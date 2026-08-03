@@ -1,0 +1,44 @@
+import { describe, it, expect } from 'vitest';
+import { getCuratorUi } from './strings';
+
+describe('getCuratorUi', () => {
+    const ru = getCuratorUi('ru');
+    const kz = getCuratorUi('kz');
+    const en = getCuratorUi('en');
+
+    it('returns an object for each of ru/kz/en', () => {
+        for (const obj of [ru, kz, en]) {
+            expect(obj).toBeTypeOf('object');
+            expect(obj).not.toBeNull();
+        }
+    });
+
+    it('all three languages produce the same keys (translation parity)', () => {
+        const ruKeys = Object.keys(ru).sort();
+        expect(Object.keys(kz).sort()).toEqual(ruKeys);
+        expect(Object.keys(en).sort()).toEqual(ruKeys);
+    });
+
+    it('string-typed entries differ between ru and en', () => {
+        const ruRec = ru as unknown as Record<string, unknown>;
+        const enRec = en as unknown as Record<string, unknown>;
+        const stringKeys = Object.keys(ru).filter((k) => typeof ruRec[k] === 'string');
+        const identical = stringKeys.filter((k) => ruRec[k] === enRec[k]);
+        expect(identical.length / stringKeys.length).toBeLessThan(0.1);
+    });
+
+    it('snapshot title — translated 3 distinct ways', () => {
+        expect(en.title).toBe('Curator workspace');
+        expect(en.title).not.toBe(ru.title);
+        expect(en.title).not.toBe(kz.title);
+    });
+
+    it('every value is string | array | function — no nested object leaks', () => {
+        for (const obj of [ru, kz, en]) {
+            for (const [key, value] of Object.entries(obj)) {
+                const ok = typeof value === 'string' || Array.isArray(value) || typeof value === 'function';
+                expect(ok, `${key} should be string|array|fn, got ${typeof value}`).toBe(true);
+            }
+        }
+    });
+});

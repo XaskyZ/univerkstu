@@ -1,0 +1,45 @@
+export type CuratorTab = 'students' | 'inbox';
+export type ManagedRole = 'starosta' | 'helper';
+
+export interface CuratorUi {
+    title: string;
+    subtitle: string;
+    students: string;
+    inbox: string;
+    switchGroup: string;
+    currentGroup: string;
+    searchPlaceholder: string;
+    openProfile: string;
+    approve: string;
+    reject: string;
+    escalate: string;
+    reviewing: string;
+    notePlaceholder: string;
+    inboxHint: string;
+    studentsHint: string;
+    noStudents: string;
+    noInbox: string;
+    joinRequests: string;
+    disputes: string;
+    queueRequest: string;
+    queueDispute: string;
+    roleStarosta: string;
+    roleHelper: string;
+    roleMember: string;
+    fullName: string;
+    group: string;
+    role: string;
+    specialty: string;
+    course: string;
+    gpa: string;
+    lastActivity: string;
+    onlineNowLabel: string;
+    assignStarosta: string;
+    revokeStarosta: string;
+    assignHelper: string;
+    revokeHelper: string;
+    close: string;
+    summaryLine: string;
+    loading: string;
+    loadError: string;
+}

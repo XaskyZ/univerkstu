@@ -1,0 +1,21 @@
+node_modules/
+dist/
+.env
+.env.local
+*.log
+files/
+
+# Debug/audit artifacts produced by parsers and scripts during local runs
+tsc_out.txt
+tmp_audit/
+tmp_*/
+test_db_*.ts
+check_sessions.*
+test_*.js
+test_*.mjs
+
+# Legacy platform-specific deploy configs (Heroku is the primary one)
+railway.json
+railway.toml
+render.yaml
+render-build.sh

@@ -1,0 +1,232 @@
+/*
+ * Full /chat redesign (shell, tabs, dialogs list, global chat).
+ *
+ * Scoped under `.chat-modern` (added to the chat PageShell) so these rules
+ * out-specificity the base `.chat-tab*` / `.dialogsv2-*` / `.globalv2-*` styles
+ * in globals.css WITHOUT editing that file (it has uncommitted WIP). Pure visual
+ * overrides — no markup/logic changes. The 1:1 thread + composer are handled by
+ * the sibling conversation.css (`.dlg-modern`). Shared sheets (UserProfileSheet,
+ * FriendActionButton) are intentionally left alone — they're used on the board
+ * and in group views too.
+ *
+ * Accent language: indigo→violet, matching the board + DM thread.
+ */
+
+.chat-modern {
+    --cm-grad: linear-gradient(135deg, #6366f1, #8b5cf6);
+    --cm-accent: #8b5cf6;
+}
+
+/* ── Tabs ────────────────────────────────────────────────────────────── */
+.chat-modern .chat-tabs { gap: 8px; }
+.chat-modern .chat-tab {
+    padding: 9px 16px;
+    border-radius: 14px;
+    border: 1.5px solid var(--border);
+    background: var(--card);
+    color: var(--muted);
+    font-weight: 700;
+    font-size: 14px;
+    transition: transform 0.12s ease, border-color 0.15s ease, color 0.15s ease;
+}
+.chat-modern .chat-tab:hover { transform: translateY(-1px); border-color: var(--cm-accent); }
+.chat-modern .chat-tab--active {
+    background: var(--cm-grad);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 8px 20px rgba(124, 58, 237, 0.3);
+}
+.chat-modern .chat-tab-badge {
+    background: rgba(255, 255, 255, 0.25);
+    color: #fff;
+    font-weight: 800;
+}
+.chat-modern .chat-tab:not(.chat-tab--active) .chat-tab-badge {
+    background: rgba(var(--primary-rgb), 0.16);
+    color: var(--cm-accent);
+}
+
+/* ── Dialogs list pane ───────────────────────────────────────────────── */
+.chat-modern .dialogsv2-list-pane {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    box-shadow: 0 2px 16px rgba(15, 23, 42, 0.05);
+}
+.chat-modern .dialogsv2-list-title { font-size: 15px; font-weight: 800; color: var(--text); }
+.chat-modern .dialogsv2-list-title svg { color: var(--cm-accent); }
+.chat-modern .dialogsv2-total-unread {
+    background: var(--cm-grad);
+    color: #fff;
+    font-weight: 800;
+    box-shadow: 0 3px 10px rgba(124, 58, 237, 0.3);
+}
+
+.chat-modern .dialogsv2-search {
+    background: var(--surface-overlay-1);
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    padding: 9px 12px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.chat-modern .dialogsv2-search:focus-within {
+    border-color: var(--cm-accent);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.16);
+}
+.chat-modern .dialogsv2-search-input { font-size: 14px; }
+
+/* Find-people / requests chips at the top of the list */
+.chat-modern .dialogsv2-list-head .chip {
+    border-radius: 11px;
+    border: 1px solid var(--border);
+    background: var(--surface-overlay-1);
+    font-weight: 600;
+}
+.chat-modern .dialogsv2-list-head .chip:hover { border-color: var(--cm-accent); }
+
+/* Room rows */
+.chat-modern .dialogsv2-row {
+    border-radius: 14px;
+    padding: 9px 10px;
+    transition: background 0.14s ease, border-color 0.14s ease, transform 0.1s ease;
+}
+.chat-modern .dialogsv2-row:hover { background: var(--surface-overlay-1); transform: translateX(2px); }
+.chat-modern .dialogsv2-row[data-active] {
+    background: rgba(139, 92, 246, 0.12);
+    border-color: rgba(139, 92, 246, 0.3);
+}
+.chat-modern .dialogsv2-row[data-active]::before { background: var(--cm-grad); }
+.chat-modern .dialogsv2-avatar {
+    border-radius: 14px;
+    box-shadow: 0 3px 10px rgba(15, 23, 42, 0.16);
+}
+.chat-modern .dialogsv2-row-name { font-size: 14px; font-weight: 700; }
+.chat-modern .dialogsv2-row-unread {
+    background: var(--cm-grad);
+    color: #fff;
+    font-weight: 800;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
+}
+
+/* Empty / new-chat / skeleton */
+.chat-modern .dialogsv2-empty-icon {
+    border-radius: 20px;
+    color: #fff;
+    background: var(--cm-grad);
+    box-shadow: 0 8px 22px rgba(124, 58, 237, 0.3);
+}
+.chat-modern .dialogsv2-empty-title { font-weight: 800; }
+.chat-modern .dialogsv2-empty-cta {
+    background: var(--cm-grad);
+    border-radius: 13px;
+    font-weight: 700;
+    padding: 10px 18px;
+    box-shadow: 0 8px 20px rgba(124, 58, 237, 0.3);
+}
+.chat-modern .dialogsv2-new {
+    border-radius: 14px;
+    border: 1.5px dashed var(--border);
+    font-weight: 700;
+}
+.chat-modern .dialogsv2-new:hover { border-color: var(--cm-accent); color: var(--cm-accent); }
+
+/* ── Global chat ─────────────────────────────────────────────────────── */
+.chat-modern .globalv2-shell {
+    /* Re-skin the gv2 design tokens to the new accent. */
+    --gv2-accent: #8b5cf6;
+    --gv2-accent-rgb: 139, 92, 246;
+    --gv2-bubble-own: linear-gradient(135deg, #6366f1, #8b5cf6);
+    --gv2-radius: 22px;
+    --gv2-radius-lg: 24px;
+}
+
+.chat-modern .globalv2-hero {
+    border-radius: 24px;
+    color: #fff;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #d946ef 100%);
+    box-shadow: 0 14px 36px rgba(124, 58, 237, 0.34);
+}
+.chat-modern .globalv2-hero-eyebrow {
+    background: rgba(255, 255, 255, 0.2);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}
+.chat-modern .globalv2-hero-title {
+    color: #fff;
+    -webkit-text-fill-color: #fff;
+    background: none;
+}
+.chat-modern .globalv2-hero-subtitle { color: rgba(255, 255, 255, 0.9); }
+
+.chat-modern .globalv2-thread-shell {
+    border-radius: 22px;
+    border: 1px solid var(--border);
+    background: var(--card);
+}
+
+/* Avatars + own bubble (white text on the solid gradient) */
+.chat-modern .globalv2-avatar {
+    background: var(--cm-grad);
+    box-shadow: 0 3px 10px rgba(124, 58, 237, 0.3);
+}
+.chat-modern .globalv2-bubble {
+    border-radius: 18px;
+    border: 1px solid var(--border);
+    background: var(--card);
+}
+.chat-modern .globalv2-row--own .globalv2-bubble {
+    background: var(--cm-grad);
+    border: none;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.28);
+}
+.chat-modern .globalv2-author { color: var(--cm-accent); font-weight: 700; }
+
+/* Composer */
+.chat-modern .globalv2-composer { border-top: 1px solid var(--border); }
+.chat-modern .globalv2-input {
+    border-radius: 22px;
+    border: 1px solid var(--border);
+    background: var(--surface-overlay-1);
+    font-size: 14.5px;
+    padding: 11px 15px;
+}
+.chat-modern .globalv2-input:focus {
+    border-color: var(--cm-accent);
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.18);
+}
+.chat-modern .globalv2-send {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: var(--cm-grad);
+    box-shadow: 0 6px 16px rgba(124, 58, 237, 0.32);
+}
+.chat-modern .globalv2-attach {
+    border-radius: 14px !important;
+    border: 1px solid var(--border) !important;
+}
+
+/* Day separator, empty, pinned rail, mute */
+.chat-modern .globalv2-day {
+    border-radius: 999px;
+    background: var(--surface-overlay-2);
+    border: 1px solid var(--border);
+    font-weight: 700;
+}
+.chat-modern .globalv2-empty-icon { color: #fff; background: var(--cm-grad); }
+.chat-modern .globalv2-empty-title { font-weight: 800; }
+.chat-modern .globalv2-pinned-rail {
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: var(--surface-overlay-1);
+}
+
+/* ── Placeholder / loading on the thread pane ────────────────────────── */
+.chat-modern .dialogsv2-placeholder-icon {
+    border-radius: 22px;
+    color: #fff;
+    background: var(--cm-grad);
+    box-shadow: 0 10px 26px rgba(124, 58, 237, 0.3);
+}
+.chat-modern .dialogsv2-placeholder-title { font-weight: 800; }

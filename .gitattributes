@@ -1,0 +1,31 @@
+# Default: treat as text and normalize line endings to LF on commit.
+# Existing checked-in files keep their stored line endings until renormalized
+# explicitly via `git add --renormalize .`. Add only after working tree is clean.
+* text=auto eol=lf
+
+# Windows shell scripts must keep CRLF to run in cmd.exe reliably.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Common binary types — never normalized.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.eot binary
+*.zip binary
+*.gz binary
+*.tar binary
+*.mp3 binary
+*.mp4 binary
+*.wav binary
+
+# Generated lockfiles — track but downplay in diffs.
+package-lock.json -diff

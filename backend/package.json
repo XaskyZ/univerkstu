@@ -1,0 +1,59 @@
+{
+    "name": "univer-schedule-backend",
+    "version": "4.0.0",
+    "private": true,
+    "type": "module",
+    "description": "Backend API for UniverSchedule v4.0",
+    "main": "dist/index.js",
+    "engines": {
+        "node": ">=20 <25"
+    },
+    "scripts": {
+        "dev": "tsx watch src/index.ts",
+        "build": "tsc",
+        "typecheck": "tsc --noEmit",
+        "start": "node dist/index.js",
+        "test": "vitest run",
+        "lint": "eslint src",
+        "test:parser": "tsx src/test-parser.ts",
+        "audit:univer-coverage": "tsx src/scripts/audit-univer-coverage.ts",
+        "backfill:action-logs": "tsx src/scripts/backfill-action-logs.ts",
+        "backfill:exams": "tsx src/scripts/backfill-exams-from-platonus.ts",
+        "backfill:platonus-grades": "tsx src/scripts/refresh-platonus-grades-for-all.ts",
+        "migrate:supabase": "tsx src/scripts/migrate-mongo-to-supabase.ts",
+        "migrate:r2": "tsx src/scripts/migrate-gridfs-to-r2.ts",
+        "migrate:social": "tsx src/scripts/migrate-social-store.ts",
+        "verify:storage": "tsx src/scripts/verify-storage-integrity.ts",
+        "seed:board": "tsx src/scripts/seed-board.ts",
+        "seed:board-images": "tsx src/scripts/seed-board-images.ts"
+    },
+    "dependencies": {
+        "@aws-sdk/client-s3": "^3.888.0",
+        "@fastify/cookie": "^11.0.2",
+        "@fastify/cors": "^11.2.0",
+        "@fastify/helmet": "^13.0.2",
+        "@fastify/jwt": "^10.0.0",
+        "axios": "^1.13.5",
+        "cheerio": "^1.1.2",
+        "crypto-js": "^4.2.0",
+        "dotenv": "^16.6.1",
+        "fastify": "^5.8.2",
+        "mammoth": "^1.12.0",
+        "mongodb": "^6.8.0",
+        "pdfjs-dist": "^5.7.284",
+        "pg": "^8.20.0",
+        "typescript": "^5.5.0",
+        "web-push": "^3.6.7",
+        "word-extractor": "^1.0.4"
+    },
+    "devDependencies": {
+        "@eslint/js": "^10.0.1",
+        "@types/crypto-js": "^4.2.2",
+        "@types/node": "^22.9.0",
+        "@types/web-push": "^3.6.4",
+        "eslint": "^10.3.0",
+        "tsx": "^4.15.0",
+        "typescript-eslint": "^8.59.3",
+        "vitest": "^4.0.18"
+    }
+}

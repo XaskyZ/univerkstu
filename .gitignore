@@ -1,0 +1,75 @@
+# Dependencies
+node_modules/
+.vercel
+
+# Build
+frontend/.next/
+frontend/out/
+
+# Env
+.env
+.env.*
+!.env.example
+!frontend/.env.local.example
+
+# Logs
+*.log
+logs-*.txt
+
+# Session/transcript dumps (могут содержать секреты — напр. JWT_SECRET)
+20[0-9][0-9]-*.txt
+*-herok*.txt
+
+# Python
+__pycache__/
+*.pyc
+*.py
+
+# Test files
+test_*.js
+benchmark_*.js
+benchmark_*.py
+compare_results.js
+
+# Dev/personal notes
+CLAUDE.md
+IDEAS.md
+gemini.md
+structure.json
+test.txt
+ROADMAP_TREE.html
+.claude/
+
+# Obsolete deploy configs
+DEPLOY.md
+MIGRATION_COMPLETE.md
+RAILWAY_DEPLOY.md
+UPTIME_MONITORING.md
+
+# Backend test/dev files
+backend/test_*.js
+backend/test_*.ts
+backend/test_*.txt
+backend/src/test-*.ts
+backend/src/setup-playwright.ts
+backend/src/routes/*.perf.test.ts
+backend/tmp-*.html
+backend/railway.json
+backend/railway.toml
+backend/render-build.sh
+backend/render.yaml
+
+# Frontend test/dev files
+frontend/src/lib/test-types.ts
+frontend/public/favicon copy.ico
+
+# Local workspace files
+.opencode/
+.vscode/
+backups/
+local/
+dev.bat
+
+# Build (backend)
+backend/dist/
+dist/

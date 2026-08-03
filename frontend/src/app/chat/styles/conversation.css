@@ -1,0 +1,208 @@
+/*
+ * Redesigned 1:1 DM conversation window.
+ *
+ * Scoped under `.dlg-modern` (added to `.dialogsv2-thread-pane`) so these rules
+ * out-specificity the base styles in globals.css WITHOUT editing that file.
+ * Pure visual overrides — no markup/logic changes. Base theme tokens
+ * (--text/--muted/--card/--border/--bg) are reused for legibility in both
+ * themes; the accent (own bubbles, send button, avatar) is the app's new
+ * indigo→violet language, matching the board.
+ */
+
+/* ── Thread surface ──────────────────────────────────────────────────── */
+.dlg-modern .chat-thread {
+    padding: 16px 14px 8px;
+    gap: 2px;
+    background:
+        radial-gradient(120% 60% at 50% 0%, rgba(99, 102, 241, 0.06), transparent 60%),
+        var(--bg);
+}
+
+/* ── Bubbles ─────────────────────────────────────────────────────────── */
+.dlg-modern .message-bubble {
+    max-width: 82%;
+    gap: 3px;
+    margin-top: 10px;
+}
+.dlg-modern .message-bubble--continued {
+    margin-top: 2px;
+}
+
+.dlg-modern .message-bubble-content {
+    padding: 9px 13px;
+    border-radius: 20px;
+    border: none;
+    font-size: 14.5px;
+    line-height: 1.45;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.07);
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* Peer (incoming) */
+.dlg-modern .message-bubble--other .message-bubble-content {
+    background: var(--card);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-bottom-left-radius: 7px;
+}
+.dlg-modern .message-bubble--continued.message-bubble--other .message-bubble-content {
+    border-top-left-radius: 7px;
+}
+
+/* Own (outgoing) — indigo→violet gradient, white text */
+.dlg-modern .message-bubble--own .message-bubble-content {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
+    border: none;
+    border-bottom-right-radius: 7px;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.28);
+}
+.dlg-modern .message-bubble--continued.message-bubble--own .message-bubble-content {
+    border-top-right-radius: 7px;
+}
+
+/* Author label (group/peer, first of a run) */
+.dlg-modern .message-bubble-author {
+    font-size: 11.5px;
+    font-weight: 700;
+    color: var(--primary);
+    padding: 0 10px 1px;
+}
+
+/* Reply preview inside a bubble */
+.dlg-modern .message-bubble-reply {
+    margin-bottom: 6px;
+    padding: 6px 10px;
+    border-radius: 10px;
+    border-left: 3px solid rgba(var(--primary-rgb), 0.6);
+    background: rgba(var(--primary-rgb), 0.07);
+}
+.dlg-modern .message-bubble--own .message-bubble-reply {
+    border-left-color: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.16);
+}
+.dlg-modern .message-bubble--own .message-bubble-reply-author,
+.dlg-modern .message-bubble--own .message-bubble-reply div {
+    color: rgba(255, 255, 255, 0.95);
+}
+
+/* Meta row (time / edited / actions) — subtle, below the bubble */
+.dlg-modern .message-bubble-meta {
+    gap: 7px;
+    font-size: 10px;
+    color: var(--muted);
+    padding: 0 10px;
+}
+
+/* Day separator pill */
+.dlg-modern .message-day-separator {
+    align-self: center;
+    margin: 12px auto;
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--muted);
+    background: var(--surface-overlay-2);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(6px);
+}
+
+/* Scroll-to-bottom FAB */
+.dlg-modern .chat-scroll-down {
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    box-shadow: 0 6px 18px rgba(15, 23, 42, 0.18);
+}
+
+/* ── Room header ─────────────────────────────────────────────────────── */
+.dlg-modern .dialogsv2-thread-head {
+    padding: 12px 14px;
+    gap: 12px;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+}
+.dlg-modern .dialogsv2-thread-head::after { display: none; } /* drop the old gradient underline */
+.dlg-modern .dialogsv2-avatar-lg {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    font-weight: 800;
+    color: #fff;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+}
+.dlg-modern .dialogsv2-thread-name { font-size: 15px; font-weight: 800; color: var(--text); }
+.dlg-modern .dialogsv2-thread-sub { font-size: 12px; color: var(--muted); }
+.dlg-modern .dialogsv2-back,
+.dlg-modern .dialogsv2-profile-btn {
+    border-radius: 11px;
+    border: 1px solid var(--border);
+    background: var(--surface-overlay-1);
+    color: var(--text);
+}
+.dlg-modern .dialogsv2-back:hover,
+.dlg-modern .dialogsv2-profile-btn:hover { border-color: #8b5cf6; }
+
+/* ── Composer ────────────────────────────────────────────────────────── */
+.dlg-modern .dialogsv2-composer {
+    padding: 10px 12px calc(10px + env(safe-area-inset-bottom, 0));
+    gap: 8px;
+    border-top: 1px solid var(--border);
+    background: var(--card);
+}
+.dlg-modern .dialogsv2-composer-row {
+    gap: 8px;
+    align-items: flex-end;
+}
+.dlg-modern .dialogsv2-composer-input {
+    border-radius: 22px;
+    border: 1px solid var(--border);
+    background: var(--surface-overlay-1);
+    color: var(--text);
+    font-size: 14.5px;
+    padding: 10px 14px;
+    min-height: 44px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.dlg-modern .dialogsv2-composer-input:focus {
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.18);
+    outline: none;
+}
+.dlg-modern .dialogsv2-attach {
+    width: 42px;
+    height: 42px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: var(--surface-overlay-1);
+    color: var(--muted);
+}
+.dlg-modern .dialogsv2-attach:hover { color: #8b5cf6; border-color: #8b5cf6; }
+.dlg-modern .dialogsv2-send {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    border: none;
+    color: #fff;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    box-shadow: 0 6px 16px rgba(124, 58, 237, 0.32);
+    transition: transform 0.15s ease, filter 0.15s ease, opacity 0.15s ease;
+}
+.dlg-modern .dialogsv2-send:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.06); }
+.dlg-modern .dialogsv2-send:disabled { opacity: 0.45; }
+
+/* Reply/edit context bar above the input */
+.dlg-modern .dialogsv2-pin {
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    border-left: 3px solid rgba(var(--primary-rgb), 0.6);
+    background: rgba(var(--primary-rgb), 0.06);
+}
+
+/* ── Placeholder (no room selected) ──────────────────────────────────── */
+.dlg-modern .dialogsv2-placeholder-icon {
+    color: #8b5cf6;
+}

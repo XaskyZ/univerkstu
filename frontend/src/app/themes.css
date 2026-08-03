@@ -1,0 +1,1317 @@
+/* =============================================
+   UniverSchedule v4.0 - Theme Variables
+   Полные темы с всеми переменными
+   ============================================= */
+
+/* === DEFAULT (DARK) THEME === */
+:root,
+[data-theme="dark"] {
+    /* RGB values for rgba() usage */
+    --primary-rgb: 93, 140, 255;
+    --danger-rgb: 255, 107, 138;
+    --good-rgb: 111, 244, 214;
+    --accent-rgb: 120, 167, 255;
+
+    --bg: #060918;
+    --bg-secondary: #0d1225;
+    --card: rgba(24, 40, 84, 0.82);
+    --card-hover: rgba(30, 50, 100, 0.9);
+
+    --text: #eef3ff;
+    --text-secondary: #c5d2ff;
+    --muted: #96a7d7;
+
+    --primary: #5d8cff;
+    --primary-hover: #4a7aff;
+    --accent: #78a7ff;
+    --accent-2: #b095ff;
+    --good: #6ff4d6;
+    --danger: #ff6b8a;
+
+    /* Foreground for anything painted on --primary (.btn-primary, active
+       segmented-control pills, primary chips). Hand-checked to clear WCAG AA
+       4.5:1 against this theme's --primary — white does NOT clear it on any of
+       the eleven themes, so never fall back to #fff. dark: 6.66:1. */
+    --button-primary-fg: #000000;
+
+    --border: rgba(93, 125, 210, 0.32);
+    --border-hover: rgba(106, 142, 230, 0.5);
+
+    --header-bg: rgba(18, 30, 64, 0.92);
+    --header-blur: 14px;
+
+    --shadow: 0 24px 50px rgba(8, 13, 34, 0.55);
+    --shadow-sm: 0 8px 24px rgba(8, 13, 34, 0.4);
+
+    --lesson-bg: linear-gradient(160deg, rgba(107, 164, 255, 0.38), rgba(87, 138, 255, 0.24));
+    --lesson-border: rgba(122, 176, 255, 0.45);
+
+    --gradient-primary: linear-gradient(180deg, #5d8cff, #4157ff);
+    --gradient-card: linear-gradient(180deg, rgba(24, 40, 84, 0.78), rgba(28, 52, 96, 0.86));
+
+    --app-bg: radial-gradient(1200px 620px at 75% -20%, rgba(90, 138, 255, .28) 0%, rgba(6, 9, 24, 0) 55%),
+        radial-gradient(1100px 720px at -18% 110%, rgba(56, 208, 255, .22) 0%, rgba(6, 9, 24, 0) 65%),
+        #060918;
+
+    /* Badge colors for dark theme */
+    --badge-lecture-bg: rgba(var(--primary-rgb), 0.25);
+    --badge-lecture-color: #78a7ff;
+    --badge-lecture-border: rgba(var(--primary-rgb), 0.35);
+
+    --badge-seminar-bg: rgba(111, 244, 214, 0.2);
+    --badge-seminar-color: #6ff4d6;
+    --badge-seminar-border: rgba(111, 244, 214, 0.35);
+
+    --badge-lab-bg: rgba(176, 149, 255, 0.2);
+    --badge-lab-color: #b095ff;
+    --badge-lab-border: rgba(176, 149, 255, 0.35);
+
+    --badge-srs-bg: rgba(251, 191, 36, 0.2);
+    --badge-srs-color: #fbbf24;
+    --badge-srs-border: rgba(251, 191, 36, 0.35);
+
+    --badge-num-bg: rgba(111, 244, 214, 0.15);
+    --badge-num-color: #6ff4d6;
+    --badge-num-border: rgba(111, 244, 214, 0.3);
+
+    --badge-denom-bg: rgba(255, 154, 108, 0.15);
+    --badge-denom-color: #ff9a6c;
+    --badge-denom-border: rgba(255, 154, 108, 0.3);
+
+    --status-success-bg: rgba(34, 197, 94, 0.16);
+    --status-success-color: rgb(134, 239, 172);
+    --status-success-border: rgba(34, 197, 94, 0.35);
+    --status-info-bg: rgba(59, 130, 246, 0.16);
+    --status-info-color: rgb(147, 197, 253);
+    --status-info-border: rgba(59, 130, 246, 0.35);
+    --status-warning-bg: rgba(234, 179, 8, 0.16);
+    --status-warning-color: #fcd34d;
+    --status-warning-border: rgba(234, 179, 8, 0.35);
+    --status-danger-bg: rgba(239, 68, 68, 0.16);
+    --status-danger-color: rgb(252, 165, 165);
+    --status-danger-border: rgba(239, 68, 68, 0.35);
+
+    --schedule-time-slot-bg: rgba(255, 255, 255, 0.03);
+    --schedule-break-badge-bg: rgba(255, 255, 255, 0.03);
+    --schedule-refresh-bg: rgba(255, 255, 255, 0.08);
+    --schedule-refresh-hover-bg: rgba(var(--primary-rgb), 0.15);
+    --schedule-day-selector-hover-bg: rgba(255, 255, 255, 0.05);
+    --schedule-day-selector-today-bg: rgba(var(--primary-rgb), 0.15);
+    --schedule-selected-day-count-bg: rgba(255, 255, 255, 0.05);
+
+    --weekend-light-bg: linear-gradient(145deg, rgba(255,255,255,0.98), rgba(244,247,255,0.96));
+    --weekend-light-border: rgba(176, 185, 235, 0.34);
+    --weekend-light-shadow: 0 22px 42px rgba(172, 177, 214, 0.16);
+    --weekend-light-title: #24304a;
+    --weekend-light-label: #5f6a8c;
+    --weekend-light-subtitle: rgba(75, 85, 116, 0.82);
+    --weekend-light-hint: rgba(109, 113, 137, 0.76);
+    --weekend-light-dot: rgba(88, 116, 255, 0.24);
+    --weekend-light-pip: rgba(176, 185, 235, 0.4);
+
+    /* Premium feature cards */
+    --grades-connected-bg: linear-gradient(135deg, rgba(59, 130, 246, 0.14), rgba(15, 23, 42, 0.72));
+    --grades-summary-bg: linear-gradient(135deg, rgba(59,130,246,0.22), rgba(20,30,60,0.78));
+    --grades-login-bg: linear-gradient(140deg, rgba(59,130,246,0.18), rgba(16,24,40,0.9) 58%);
+    --grades-login-note-bg: rgba(8,12,24,0.45);
+    --grades-input-bg: rgba(7, 10, 20, 0.8);
+    --grades-input-border: rgba(148,163,184,0.35);
+    --grades-overview-bg: linear-gradient(135deg, rgba(59,130,246,0.22), rgba(15,23,42,0.76) 60%, rgba(30,41,59,0.84));
+    --grades-overview-chip-bg: linear-gradient(180deg, rgba(255,255,255,0.065), rgba(255,255,255,0.04));
+    --grades-overview-chip-border: rgba(147, 197, 253, 0.22);
+    --grades-subject-surface: rgba(15, 23, 42, 0.96);
+    --grades-assistant-bg: linear-gradient(180deg, rgba(8, 12, 24, 0.62), rgba(15, 23, 42, 0.48));
+    --grades-grid-bg: rgba(8, 12, 24, 0.35);
+    --grades-journal-bg: linear-gradient(180deg, rgba(18, 27, 53, 0.98) 0%, rgba(8, 12, 24, 0.98) 100%);
+    --grades-journal-item-bg: rgba(255,255,255,0.025);
+
+    --leaderboard-card-bg:
+        radial-gradient(circle at 14% 18%, rgba(250,204,21,0.26), transparent 24%),
+        radial-gradient(circle at 82% 22%, rgba(96,165,250,0.24), transparent 26%),
+        radial-gradient(circle at 72% 84%, rgba(244,114,182,0.22), transparent 24%),
+        linear-gradient(145deg, rgba(15,23,42,0.98), rgba(24,24,60,0.98));
+    --leaderboard-card-border: rgba(244,114,182,0.2);
+    --leaderboard-card-shadow: 0 30px 70px rgba(15,23,42,0.34);
+    --leaderboard-card-eyebrow-bg: rgba(255,255,255,0.08);
+    --leaderboard-card-orb-bg: rgba(255,255,255,0.08);
+    --leaderboard-card-orb-border: rgba(255,255,255,0.08);
+    --leaderboard-card-title: white;
+    --leaderboard-card-text: rgba(219,234,254,0.82);
+    --leaderboard-card-meta: rgba(191,219,254,0.72);
+    --leaderboard-eyebrow-color: #fde68a;
+    --leaderboard-warm-gradient: linear-gradient(135deg, #fcd34d, #f59e0b);
+    --leaderboard-warm-text: #fcd34d;
+    --leaderboard-tier-b-bg: rgba(234,179,8,0.16);
+    --leaderboard-tier-b-color: #fde68a;
+    --leaderboard-tier-b-border: rgba(234,179,8,0.32);
+
+    --leaderboard-panel-bg: linear-gradient(180deg, rgba(14,22,46,0.96), rgba(9,14,30,0.98));
+    --leaderboard-panel-border: rgba(99,102,241,0.22);
+    --leaderboard-panel-shadow: 0 30px 80px rgba(3, 7, 18, 0.45);
+    --leaderboard-panel-eyebrow-bg: rgba(255,255,255,0.06);
+    --leaderboard-panel-title: white;
+    --leaderboard-panel-copy: rgba(191,219,254,0.84);
+    --leaderboard-panel-refresh-bg: rgba(15,23,42,0.58);
+    --leaderboard-panel-refresh-border: rgba(148,163,184,0.22);
+    --leaderboard-panel-refresh-color: white;
+    --leaderboard-pill-bg: rgba(255,255,255,0.04);
+    --leaderboard-pill-color: rgba(191,219,254,0.78);
+    --leaderboard-surface-bg: linear-gradient(180deg, rgba(15,23,42,0.62), rgba(8,13,28,0.82));
+    --leaderboard-surface-border: rgba(148,163,184,0.16);
+    --leaderboard-surface-shadow: 0 18px 44px rgba(15, 23, 42, 0.24);
+    --leaderboard-muted: rgba(191,219,254,0.64);
+    --leaderboard-text: white;
+    --leaderboard-body: rgba(191,219,254,0.82);
+    --leaderboard-input-bg: rgba(8,12,24,0.42);
+    --leaderboard-input-border: rgba(148,163,184,0.18);
+    --leaderboard-secondary-button-bg: linear-gradient(135deg, rgba(96,165,250,0.22), rgba(139,92,246,0.24));
+    --leaderboard-secondary-button-border: rgba(99,102,241,0.28);
+    --leaderboard-secondary-button-color: white;
+    --leaderboard-rank-bubble-bg: rgba(148,163,184,0.12);
+    --leaderboard-rank-bubble-color: rgba(226,232,240,0.86);
+    --leaderboard-chip-bg: rgba(255,255,255,0.06);
+    --leaderboard-chip-border: rgba(148,163,184,0.16);
+    --leaderboard-chip-color: rgba(191,219,254,0.82);
+    --leaderboard-dropdown-bg: rgba(6,10,24,0.94);
+    --leaderboard-dropdown-shadow: 0 24px 40px rgba(2, 6, 23, 0.38);
+    --leaderboard-dropdown-muted: rgba(191,219,254,0.7);
+    --leaderboard-row-bg: rgba(255,255,255,0.02);
+    --leaderboard-row-active-bg: rgba(59,130,246,0.08);
+
+    /* Tier badges (S/A/B/C/D/E) — B/F already defined above. */
+    --leaderboard-tier-s-bg: rgba(34,197,94,0.18);
+    --leaderboard-tier-s-color: #bbf7d0;
+    --leaderboard-tier-s-border: rgba(34,197,94,0.32);
+    --leaderboard-tier-a-bg: rgba(16,185,129,0.16);
+    --leaderboard-tier-a-color: #a7f3d0;
+    --leaderboard-tier-a-border: rgba(16,185,129,0.3);
+    --leaderboard-tier-c-bg: rgba(249,115,22,0.16);
+    --leaderboard-tier-c-color: #fdba74;
+    --leaderboard-tier-c-border: rgba(249,115,22,0.32);
+    --leaderboard-tier-d-bg: rgba(var(--status-danger-rgb), 0.16);
+    --leaderboard-tier-d-color: #fca5a5;
+    --leaderboard-tier-d-border: rgba(var(--status-danger-rgb), 0.32);
+    --leaderboard-tier-e-bg: rgba(190,24,93,0.18);
+    --leaderboard-tier-e-color: #f9a8d4;
+    --leaderboard-tier-e-border: rgba(190,24,93,0.32);
+
+    /* Leaderboard inline accents (TeachersView) */
+    --leaderboard-error-text: #fda4af;
+    --leaderboard-status-ok-text: #86efac;
+    --leaderboard-status-error-text: #fda4af;
+    --leaderboard-my-rating-color: #c4b5fd;
+    --leaderboard-accent-emerald-gradient: linear-gradient(135deg, #34d399, #0f766e);
+    --leaderboard-accent-purple-gradient: linear-gradient(135deg, #c084fc, #8b5cf6);
+
+    /* File-type chips for UMKD downloads. */
+    --filetype-pdf-bg: #dc2626;
+    --filetype-pdf-color: #ffffff;
+    --filetype-doc-bg: #2563eb;
+    --filetype-doc-color: #ffffff;
+    --filetype-xls-bg: #059669;
+    --filetype-xls-color: #ffffff;
+    --filetype-ppt-bg: #ea580c;
+    --filetype-ppt-color: #ffffff;
+    --filetype-zip-bg: #7c3aed;
+    --filetype-zip-color: #ffffff;
+}
+
+/* =============================================
+   SURFACE OVERLAYS — polarity follows the colour scheme, not the theme name.
+   These are the only definition site: globals.css must NOT redefine them in
+   `:root`, because globals.css @imports this file and an equal-specificity
+   `:root` block later in the cascade would silently win (that bug forced white
+   overlays onto every light theme).
+   The dark set is also attached to `:root` so it is correct before hydration
+   sets `data-theme-scheme` on <html>.
+   ============================================= */
+:root,
+[data-theme-scheme="dark"] {
+    --surface-overlay-1: rgba(255, 255, 255, 0.03);
+    --surface-overlay-2: rgba(255, 255, 255, 0.05);
+    --surface-overlay-3: rgba(255, 255, 255, 0.08);
+    --surface-border-1: rgba(255, 255, 255, 0.06);
+    --surface-border-2: rgba(255, 255, 255, 0.10);
+}
+
+[data-theme-scheme="light"] {
+    /* Inverted: dark ink over near-white surfaces, so chips stay visible. */
+    --surface-overlay-1: rgba(28, 32, 60, 0.04);
+    --surface-overlay-2: rgba(28, 32, 60, 0.06);
+    --surface-overlay-3: rgba(28, 32, 60, 0.09);
+    --surface-border-1: rgba(28, 32, 60, 0.08);
+    --surface-border-2: rgba(28, 32, 60, 0.12);
+}
+
+/* === GENERIC LIGHT-SCHEME TOKENS === */
+[data-theme-scheme="light"] {
+    --schedule-time-slot-bg: linear-gradient(180deg, rgba(239, 243, 255, 0.98), rgba(248, 250, 255, 0.98));
+    --schedule-break-badge-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(242, 246, 255, 0.96));
+    --schedule-refresh-bg: linear-gradient(145deg, rgba(255,255,255,0.86), rgba(240,244,255,0.94));
+    --schedule-refresh-hover-bg: rgba(88, 116, 255, 0.12);
+    --schedule-day-selector-hover-bg: rgba(88, 116, 255, 0.08);
+    --schedule-day-selector-today-bg: rgba(88, 116, 255, 0.12);
+    --schedule-selected-day-count-bg: linear-gradient(145deg, rgba(255,255,255,0.88), rgba(241,245,255,0.96));
+
+    --weekend-light-bg:
+        radial-gradient(circle at 14% 22%, rgba(250,204,21,0.10), transparent 22%),
+        radial-gradient(circle at 80% 18%, rgba(96,165,250,0.14), transparent 24%),
+        radial-gradient(circle at 72% 84%, rgba(244,114,182,0.10), transparent 20%),
+        linear-gradient(145deg, rgba(255,255,255,0.98), rgba(244,247,255,0.96) 54%, rgba(250,245,255,0.96));
+    --weekend-light-border: rgba(176, 185, 235, 0.34);
+    --weekend-light-shadow: 0 24px 46px rgba(172, 177, 214, 0.18);
+    --weekend-light-title: #24304a;
+    --weekend-light-label: #5f6a8c;
+    --weekend-light-subtitle: rgba(75, 85, 116, 0.82);
+    --weekend-light-hint: rgba(109, 113, 137, 0.72);
+    --weekend-light-dot: rgba(88, 116, 255, 0.24);
+    --weekend-light-pip: rgba(176, 185, 235, 0.42);
+
+    --grades-connected-bg: linear-gradient(145deg, rgba(240,244,255,0.98), rgba(232,240,255,0.94) 48%, rgba(250,245,255,0.96));
+    --grades-summary-bg: linear-gradient(145deg, rgba(239,244,255,0.98), rgba(232,239,255,0.95) 52%, rgba(250,245,255,0.96));
+    --grades-login-bg: linear-gradient(145deg, rgba(247,250,255,0.98), rgba(239,244,255,0.95) 55%, rgba(250,245,255,0.96));
+    --grades-login-note-bg: linear-gradient(145deg, rgba(255,255,255,0.82), rgba(242,246,255,0.92));
+    --grades-input-bg: linear-gradient(145deg, rgba(255,255,255,0.92), rgba(243,246,255,0.96));
+    --grades-input-border: rgba(176,185,235,0.45);
+    --grades-overview-bg: linear-gradient(145deg, rgba(238,243,255,0.98), rgba(231,238,255,0.95) 58%, rgba(249,244,255,0.97));
+    --grades-overview-chip-bg: linear-gradient(145deg, rgba(255,255,255,0.86), rgba(239,243,255,0.96));
+    --grades-overview-chip-border: rgba(176,185,235,0.4);
+    --grades-subject-surface: linear-gradient(145deg, rgba(255,255,255,0.94), rgba(245,247,255,0.98));
+    --grades-assistant-bg: linear-gradient(145deg, rgba(255,255,255,0.86), rgba(244,247,255,0.95));
+    --grades-grid-bg: linear-gradient(145deg, rgba(255,255,255,0.84), rgba(242,246,255,0.94));
+    --grades-journal-bg: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(245,248,255,0.96));
+    --grades-journal-item-bg: linear-gradient(145deg, rgba(255,255,255,0.88), rgba(245,247,255,0.96));
+
+    --leaderboard-card-bg:
+        radial-gradient(circle at 14% 18%, rgba(250,204,21,0.16), transparent 24%),
+        radial-gradient(circle at 82% 22%, rgba(96,165,250,0.16), transparent 28%),
+        radial-gradient(circle at 72% 84%, rgba(244,114,182,0.14), transparent 24%),
+        linear-gradient(145deg, #f0f4ff, #faf5ff);
+    --leaderboard-card-border: rgba(139,92,246,0.22);
+    --leaderboard-card-shadow: 0 26px 56px rgba(172, 177, 214, 0.28);
+    --leaderboard-card-eyebrow-bg: rgba(255,255,255,0.68);
+    --leaderboard-card-orb-bg: rgba(255,255,255,0.56);
+    --leaderboard-card-orb-border: rgba(176,185,235,0.34);
+    --leaderboard-card-title: #1f2337;
+    --leaderboard-card-text: #5b6285;
+    --leaderboard-card-meta: #6d7189;
+    --leaderboard-eyebrow-color: #b45309;
+    --leaderboard-warm-gradient: linear-gradient(135deg, #d97706, #b45309);
+    --leaderboard-warm-text: #b45309;
+    --leaderboard-tier-b-bg: linear-gradient(145deg, rgba(254,243,199,0.9), rgba(255,251,235,0.98));
+    --leaderboard-tier-b-color: #92400e;
+    --leaderboard-tier-b-border: rgba(217,119,6,0.22);
+
+    --leaderboard-panel-bg:
+        radial-gradient(circle at 14% 16%, rgba(251,191,36,0.14), transparent 24%),
+        radial-gradient(circle at 84% 12%, rgba(96,165,250,0.12), transparent 26%),
+        radial-gradient(circle at 72% 86%, rgba(244,114,182,0.12), transparent 24%),
+        linear-gradient(145deg, rgba(245,247,255,0.98), rgba(250,245,255,0.96));
+    --leaderboard-panel-border: rgba(139,92,246,0.18);
+    --leaderboard-panel-shadow: 0 28px 60px rgba(172, 177, 214, 0.32);
+    --leaderboard-panel-eyebrow-bg: rgba(255,255,255,0.7);
+    --leaderboard-panel-title: #1f2337;
+    --leaderboard-panel-copy: #5b6285;
+    --leaderboard-panel-refresh-bg: linear-gradient(145deg, rgba(255,255,255,0.82), rgba(240,244,255,0.92));
+    --leaderboard-panel-refresh-border: rgba(176,185,235,0.35);
+    --leaderboard-panel-refresh-color: #28304a;
+    --leaderboard-pill-bg: linear-gradient(145deg, rgba(255,255,255,0.82), rgba(240,244,255,0.94));
+    --leaderboard-pill-color: #59607d;
+    --leaderboard-surface-bg: linear-gradient(145deg, rgba(255,255,255,0.88), rgba(244,247,255,0.98));
+    --leaderboard-surface-border: rgba(176,185,235,0.34);
+    --leaderboard-surface-shadow: 0 18px 38px rgba(172, 177, 214, 0.18);
+    --leaderboard-muted: #6d7189;
+    --leaderboard-text: #1f2337;
+    --leaderboard-body: #5b6285;
+    --leaderboard-input-bg: linear-gradient(145deg, rgba(255,255,255,0.92), rgba(243,246,255,0.96));
+    --leaderboard-input-border: rgba(176,185,235,0.38);
+    --leaderboard-secondary-button-bg: linear-gradient(145deg, rgba(232,239,255,0.98), rgba(243,236,255,0.96));
+    --leaderboard-secondary-button-border: rgba(139,92,246,0.24);
+    --leaderboard-secondary-button-color: #364062;
+    --leaderboard-rank-bubble-bg: linear-gradient(145deg, rgba(232,239,255,0.92), rgba(245,247,255,0.96));
+    --leaderboard-rank-bubble-color: #5b6285;
+    --leaderboard-chip-bg: linear-gradient(145deg, rgba(255,255,255,0.86), rgba(241,245,255,0.94));
+    --leaderboard-chip-border: rgba(176,185,235,0.3);
+    --leaderboard-chip-color: #59607d;
+    --leaderboard-dropdown-bg: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(246,248,255,0.98));
+    --leaderboard-dropdown-shadow: 0 20px 34px rgba(172, 177, 214, 0.2);
+    --leaderboard-dropdown-muted: #6d7189;
+    --leaderboard-row-bg: linear-gradient(145deg, rgba(255,255,255,0.84), rgba(244,247,255,0.94));
+    --leaderboard-row-active-bg: linear-gradient(145deg, rgba(231,236,255,0.96), rgba(243,237,255,0.96));
+}
+
+/* === LIGHT THEME === */
+[data-theme="light"] {
+    /* RGB values for rgba() usage */
+    --primary-rgb: 88, 116, 255;
+    --danger-rgb: 220, 38, 38;
+    --good-rgb: 22, 163, 74;
+    --accent-rgb: 88, 116, 255;
+
+    /* Surface overlays are defined once, by scheme, at the top of this file. */
+
+    --bg: #f4f6ff;
+    --bg-secondary: #ffffff;
+    --card: rgba(255, 255, 255, 0.95);
+    --card-hover: rgba(255, 255, 255, 1);
+
+    --text: #1f2337;
+    --text-secondary: #4d5170;
+    --muted: #6d7189;
+
+    --primary: #5874ff;
+    --primary-hover: #4563ff;
+    --accent: #5874ff;
+    --accent-2: #8b5cf6;
+    --good: #16a34a;
+    --danger: #dc2626;
+
+    /* on #5874ff — 5.36:1 */
+    --button-primary-fg: #000000;
+
+    --border: rgba(194, 198, 225, 0.65);
+    --border-hover: rgba(172, 179, 242, 0.8);
+
+    --header-bg: rgba(255, 255, 255, 0.92);
+    --header-blur: 12px;
+
+    --shadow: 0 24px 48px rgba(172, 177, 214, 0.35);
+    --shadow-sm: 0 8px 20px rgba(172, 177, 214, 0.25);
+
+    --lesson-bg: linear-gradient(160deg, rgba(88, 116, 255, 0.12), rgba(88, 116, 255, 0.06));
+    --lesson-border: rgba(88, 116, 255, 0.25);
+
+    --gradient-primary: linear-gradient(180deg, #5874ff, #4563ff);
+    --gradient-card: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(248, 250, 255, 0.95));
+
+    --app-bg: linear-gradient(135deg, #f4f6ff 0%, #e8ecff 100%);
+
+    /* Badge colors for light theme */
+    --badge-lecture-bg: rgba(59, 130, 246, 0.15);
+    --badge-lecture-color: #2563eb;
+    --badge-lecture-border: rgba(59, 130, 246, 0.4);
+
+    --badge-seminar-bg: rgba(22, 163, 74, 0.12);
+    --badge-seminar-color: #16a34a;
+    --badge-seminar-border: rgba(22, 163, 74, 0.35);
+
+    --badge-lab-bg: rgba(139, 92, 246, 0.12);
+    --badge-lab-color: #7c3aed;
+    --badge-lab-border: rgba(139, 92, 246, 0.35);
+
+    --badge-srs-bg: rgba(245, 158, 11, 0.15);
+    --badge-srs-color: #d97706;
+    --badge-srs-border: rgba(245, 158, 11, 0.4);
+
+    --badge-num-bg: rgba(22, 163, 74, 0.1);
+    --badge-num-color: #16a34a;
+    --badge-num-border: rgba(22, 163, 74, 0.3);
+
+    --badge-denom-bg: rgba(234, 88, 12, 0.1);
+    --badge-denom-color: #ea580c;
+    --badge-denom-border: rgba(234, 88, 12, 0.3);
+
+    --status-success-bg: rgba(22, 163, 74, 0.14);
+    --status-success-color: #15803d;
+    --status-success-border: rgba(22, 163, 74, 0.28);
+    --status-info-bg: rgba(59, 130, 246, 0.14);
+    --status-info-color: #2563eb;
+    --status-info-border: rgba(59, 130, 246, 0.28);
+    --status-warning-bg: linear-gradient(145deg, rgba(254, 243, 199, 0.92), rgba(255, 251, 235, 0.98));
+    --status-warning-color: #b45309;
+    --status-warning-border: rgba(217, 119, 6, 0.24);
+    --status-danger-bg: rgba(239, 68, 68, 0.12);
+    --status-danger-color: #b91c1c;
+    --status-danger-border: rgba(239, 68, 68, 0.22);
+
+    --schedule-time-slot-bg: linear-gradient(180deg, rgba(239, 243, 255, 0.98), rgba(248, 250, 255, 0.98));
+    --schedule-break-badge-bg: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(242, 246, 255, 0.96));
+    --schedule-refresh-bg: linear-gradient(145deg, rgba(255,255,255,0.86), rgba(240,244,255,0.94));
+    --schedule-refresh-hover-bg: rgba(88, 116, 255, 0.12);
+    --schedule-day-selector-hover-bg: rgba(88, 116, 255, 0.08);
+    --schedule-day-selector-today-bg: rgba(88, 116, 255, 0.12);
+    --schedule-selected-day-count-bg: linear-gradient(145deg, rgba(255,255,255,0.88), rgba(241,245,255,0.96));
+
+    --weekend-light-bg:
+        radial-gradient(circle at 14% 22%, rgba(250,204,21,0.10), transparent 22%),
+        radial-gradient(circle at 80% 18%, rgba(96,165,250,0.14), transparent 24%),
+        radial-gradient(circle at 72% 84%, rgba(244,114,182,0.10), transparent 20%),
+        linear-gradient(145deg, rgba(255,255,255,0.98), rgba(244,247,255,0.96) 54%, rgba(250,245,255,0.96));
+    --weekend-light-border: rgba(176, 185, 235, 0.34);
+    --weekend-light-shadow: 0 24px 46px rgba(172, 177, 214, 0.18);
+    --weekend-light-title: #24304a;
+    --weekend-light-label: #5f6a8c;
+    --weekend-light-subtitle: rgba(75, 85, 116, 0.82);
+    --weekend-light-hint: rgba(109, 113, 137, 0.72);
+    --weekend-light-dot: rgba(88, 116, 255, 0.24);
+    --weekend-light-pip: rgba(176, 185, 235, 0.42);
+
+    /* Premium feature cards */
+    --grades-connected-bg: linear-gradient(145deg, rgba(240,244,255,0.98), rgba(232,240,255,0.94) 48%, rgba(250,245,255,0.96));
+    --grades-summary-bg: linear-gradient(145deg, rgba(239,244,255,0.98), rgba(232,239,255,0.95) 52%, rgba(250,245,255,0.96));
+    --grades-login-bg: linear-gradient(145deg, rgba(247,250,255,0.98), rgba(239,244,255,0.95) 55%, rgba(250,245,255,0.96));
+    --grades-login-note-bg: linear-gradient(145deg, rgba(255,255,255,0.82), rgba(242,246,255,0.92));
+    --grades-input-bg: linear-gradient(145deg, rgba(255,255,255,0.92), rgba(243,246,255,0.96));
+    --grades-input-border: rgba(176,185,235,0.45);
+    --grades-overview-bg: linear-gradient(145deg, rgba(238,243,255,0.98), rgba(231,238,255,0.95) 58%, rgba(249,244,255,0.97));
+    --grades-overview-chip-bg: linear-gradient(145deg, rgba(255,255,255,0.86), rgba(239,243,255,0.96));
+    --grades-overview-chip-border: rgba(176,185,235,0.4);
+    --grades-subject-surface: linear-gradient(145deg, rgba(255,255,255,0.94), rgba(245,247,255,0.98));
+    --grades-assistant-bg: linear-gradient(145deg, rgba(255,255,255,0.86), rgba(244,247,255,0.95));
+    --grades-grid-bg: linear-gradient(145deg, rgba(255,255,255,0.84), rgba(242,246,255,0.94));
+    --grades-journal-bg: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(245,248,255,0.96));
+    --grades-journal-item-bg: linear-gradient(145deg, rgba(255,255,255,0.88), rgba(245,247,255,0.96));
+
+    --leaderboard-card-bg:
+        radial-gradient(circle at 14% 18%, rgba(250,204,21,0.16), transparent 24%),
+        radial-gradient(circle at 82% 22%, rgba(96,165,250,0.16), transparent 28%),
+        radial-gradient(circle at 72% 84%, rgba(244,114,182,0.14), transparent 24%),
+        linear-gradient(145deg, #f0f4ff, #faf5ff);
+    --leaderboard-card-border: rgba(139,92,246,0.22);
+    --leaderboard-card-shadow: 0 26px 56px rgba(172, 177, 214, 0.28);
+    --leaderboard-card-eyebrow-bg: rgba(255,255,255,0.68);
+    --leaderboard-card-orb-bg: rgba(255,255,255,0.56);
+    --leaderboard-card-orb-border: rgba(176,185,235,0.34);
+    --leaderboard-card-title: #1f2337;
+    --leaderboard-card-text: #5b6285;
+    --leaderboard-card-meta: #6d7189;
+    --leaderboard-eyebrow-color: #b45309;
+    --leaderboard-warm-gradient: linear-gradient(135deg, #d97706, #b45309);
+    --leaderboard-warm-text: #b45309;
+    --leaderboard-tier-b-bg: linear-gradient(145deg, rgba(254,243,199,0.9), rgba(255,251,235,0.98));
+    --leaderboard-tier-b-color: #92400e;
+    --leaderboard-tier-b-border: rgba(217,119,6,0.22);
+
+    --leaderboard-panel-bg:
+        radial-gradient(circle at 14% 16%, rgba(251,191,36,0.14), transparent 24%),
+        radial-gradient(circle at 84% 12%, rgba(96,165,250,0.12), transparent 26%),
+        radial-gradient(circle at 72% 86%, rgba(244,114,182,0.12), transparent 24%),
+        linear-gradient(145deg, rgba(245,247,255,0.98), rgba(250,245,255,0.96));
+    --leaderboard-panel-border: rgba(139,92,246,0.18);
+    --leaderboard-panel-shadow: 0 28px 60px rgba(172, 177, 214, 0.32);
+    --leaderboard-panel-eyebrow-bg: rgba(255,255,255,0.7);
+    --leaderboard-panel-title: #1f2337;
+    --leaderboard-panel-copy: #5b6285;
+    --leaderboard-panel-refresh-bg: linear-gradient(145deg, rgba(255,255,255,0.82), rgba(240,244,255,0.92));
+    --leaderboard-panel-refresh-border: rgba(176,185,235,0.35);
+    --leaderboard-panel-refresh-color: #28304a;
+    --leaderboard-pill-bg: linear-gradient(145deg, rgba(255,255,255,0.82), rgba(240,244,255,0.94));
+    --leaderboard-pill-color: #59607d;
+    --leaderboard-surface-bg: linear-gradient(145deg, rgba(255,255,255,0.88), rgba(244,247,255,0.98));
+    --leaderboard-surface-border: rgba(176,185,235,0.34);
+    --leaderboard-surface-shadow: 0 18px 38px rgba(172, 177, 214, 0.18);
+    --leaderboard-muted: #6d7189;
+    --leaderboard-text: #1f2337;
+    --leaderboard-body: #5b6285;
+    --leaderboard-input-bg: linear-gradient(145deg, rgba(255,255,255,0.92), rgba(243,246,255,0.96));
+    --leaderboard-input-border: rgba(176,185,235,0.38);
+    --leaderboard-secondary-button-bg: linear-gradient(145deg, rgba(232,239,255,0.98), rgba(243,236,255,0.96));
+    --leaderboard-secondary-button-border: rgba(139,92,246,0.24);
+    --leaderboard-secondary-button-color: #364062;
+    --leaderboard-rank-bubble-bg: linear-gradient(145deg, rgba(232,239,255,0.92), rgba(245,247,255,0.96));
+    --leaderboard-rank-bubble-color: #5b6285;
+    --leaderboard-chip-bg: linear-gradient(145deg, rgba(255,255,255,0.86), rgba(241,245,255,0.94));
+    --leaderboard-chip-border: rgba(176,185,235,0.3);
+    --leaderboard-chip-color: #59607d;
+    --leaderboard-dropdown-bg: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(246,248,255,0.98));
+    --leaderboard-dropdown-shadow: 0 20px 34px rgba(172, 177, 214, 0.2);
+    --leaderboard-dropdown-muted: #6d7189;
+    --leaderboard-row-bg: linear-gradient(145deg, rgba(255,255,255,0.84), rgba(244,247,255,0.94));
+    --leaderboard-row-active-bg: linear-gradient(145deg, rgba(231,236,255,0.96), rgba(243,237,255,0.96));
+
+    /* Tier badges (S/A/B/C/D/E) — light variant uses softer pastels with darker text. */
+    --leaderboard-tier-s-bg: linear-gradient(145deg, rgba(220,252,231,0.96), rgba(240,253,244,0.98));
+    --leaderboard-tier-s-color: #166534;
+    --leaderboard-tier-s-border: rgba(34,197,94,0.32);
+    --leaderboard-tier-a-bg: linear-gradient(145deg, rgba(209,250,229,0.96), rgba(236,253,245,0.98));
+    --leaderboard-tier-a-color: #065f46;
+    --leaderboard-tier-a-border: rgba(16,185,129,0.3);
+    --leaderboard-tier-c-bg: linear-gradient(145deg, rgba(255,237,213,0.96), rgba(255,247,237,0.98));
+    --leaderboard-tier-c-color: #9a3412;
+    --leaderboard-tier-c-border: rgba(249,115,22,0.32);
+    --leaderboard-tier-d-bg: linear-gradient(145deg, rgba(254,226,226,0.96), rgba(255,241,242,0.98));
+    --leaderboard-tier-d-color: #991b1b;
+    --leaderboard-tier-d-border: rgba(var(--status-danger-rgb), 0.32);
+    --leaderboard-tier-e-bg: linear-gradient(145deg, rgba(252,231,243,0.96), rgba(253,242,248,0.98));
+    --leaderboard-tier-e-color: #9d174d;
+    --leaderboard-tier-e-border: rgba(190,24,93,0.32);
+
+    /* Leaderboard inline accents (TeachersView) */
+    --leaderboard-error-text: #b91c1c;
+    --leaderboard-status-ok-text: #15803d;
+    --leaderboard-status-error-text: #b91c1c;
+    --leaderboard-my-rating-color: #6d28d9;
+    --leaderboard-accent-emerald-gradient: linear-gradient(135deg, #10b981, #0f766e);
+    --leaderboard-accent-purple-gradient: linear-gradient(135deg, #a855f7, #7c3aed);
+
+    /* File-type chips — vivid backgrounds work on both light and dark surfaces. */
+    --filetype-pdf-bg: #dc2626;
+    --filetype-pdf-color: #ffffff;
+    --filetype-doc-bg: #2563eb;
+    --filetype-doc-color: #ffffff;
+    --filetype-xls-bg: #059669;
+    --filetype-xls-color: #ffffff;
+    --filetype-ppt-bg: #ea580c;
+    --filetype-ppt-color: #ffffff;
+    --filetype-zip-bg: #7c3aed;
+    --filetype-zip-color: #ffffff;
+}
+
+/* === DEEP BLUE THEME === */
+[data-theme="deep-blue"] {
+    /* RGB values for rgba() usage */
+    --primary-rgb: 122, 162, 255;
+    --danger-rgb: 255, 107, 138;
+    --good-rgb: 103, 232, 166;
+    --accent-rgb: 122, 162, 255;
+
+    --bg: #0f1420;
+    --bg-secondary: #161c2b;
+    --card: rgba(22, 28, 43, 0.95);
+    --card-hover: rgba(28, 36, 54, 0.98);
+
+    --text: #e9efff;
+    --text-secondary: #cfe0ff;
+    --muted: #9fb4ff;
+
+    --primary: #7aa2ff;
+    --primary-hover: #6694ff;
+    --accent: #7aa2ff;
+    --accent-2: #ffd37a;
+    --good: #67e8a6;
+    --danger: #ff6b8a;
+
+    /* on #7aa2ff — 7.16:1 */
+    --button-primary-fg: #0b1730;
+
+    --border: rgba(122, 162, 255, 0.2);
+    --border-hover: rgba(122, 162, 255, 0.4);
+
+    --header-bg: rgba(15, 20, 32, 0.95);
+    --header-blur: 10px;
+
+    --shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+    --shadow-sm: 0 4px 16px rgba(0, 0, 0, 0.35);
+
+    --lesson-bg: linear-gradient(180deg, rgba(122, 162, 255, 0.15), rgba(122, 162, 255, 0.08));
+    --lesson-border: rgba(122, 162, 255, 0.3);
+
+    --gradient-primary: linear-gradient(180deg, #7aa2ff, #5a88ff);
+    --gradient-card: linear-gradient(180deg, #1a2140, #161c2b);
+
+    --app-bg: linear-gradient(180deg, #0f1420 0%, #161c2b 100%);
+
+    /* Badge colors for deep-blue theme */
+    --badge-lecture-bg: rgba(122, 162, 255, 0.2);
+    --badge-lecture-color: #7aa2ff;
+    --badge-lecture-border: rgba(122, 162, 255, 0.35);
+
+    --badge-seminar-bg: rgba(103, 232, 166, 0.15);
+    --badge-seminar-color: #67e8a6;
+    --badge-seminar-border: rgba(103, 232, 166, 0.3);
+
+    --badge-lab-bg: rgba(255, 211, 122, 0.15);
+    --badge-lab-color: #ffd37a;
+    --badge-lab-border: rgba(255, 211, 122, 0.3);
+
+    --badge-srs-bg: rgba(251, 191, 36, 0.2);
+    --badge-srs-color: #fbbf24;
+    --badge-srs-border: rgba(251, 191, 36, 0.35);
+
+    --badge-num-bg: rgba(103, 232, 166, 0.12);
+    --badge-num-color: #67e8a6;
+    --badge-num-border: rgba(103, 232, 166, 0.25);
+
+    --badge-denom-bg: rgba(255, 154, 108, 0.12);
+    --badge-denom-color: #ff9a6c;
+    --badge-denom-border: rgba(255, 154, 108, 0.25);
+
+    /* Tier badges (S/A/B/C/D/E) — deep-blue leans into cool blues. */
+    --leaderboard-tier-s-bg: rgba(103,232,166,0.18);
+    --leaderboard-tier-s-color: #bbf7d0;
+    --leaderboard-tier-s-border: rgba(103,232,166,0.32);
+    --leaderboard-tier-a-bg: rgba(122,162,255,0.18);
+    --leaderboard-tier-a-color: #cfe0ff;
+    --leaderboard-tier-a-border: rgba(122,162,255,0.32);
+    --leaderboard-tier-c-bg: rgba(255,211,122,0.18);
+    --leaderboard-tier-c-color: #ffd37a;
+    --leaderboard-tier-c-border: rgba(255,211,122,0.34);
+    --leaderboard-tier-d-bg: rgba(var(--status-danger-rgb), 0.18);
+    --leaderboard-tier-d-color: #ff9eb3;
+    --leaderboard-tier-d-border: rgba(var(--status-danger-rgb), 0.34);
+    --leaderboard-tier-e-bg: rgba(190,24,93,0.2);
+    --leaderboard-tier-e-color: #f9a8d4;
+    --leaderboard-tier-e-border: rgba(190,24,93,0.34);
+
+    /* Leaderboard inline accents (TeachersView) */
+    --leaderboard-error-text: #ff9eb3;
+    --leaderboard-status-ok-text: #86efac;
+    --leaderboard-status-error-text: #ff9eb3;
+    --leaderboard-my-rating-color: #c4b5fd;
+    --leaderboard-accent-emerald-gradient: linear-gradient(135deg, #34d399, #0f766e);
+    --leaderboard-accent-purple-gradient: linear-gradient(135deg, #a78bfa, #6366f1);
+
+    /* File-type chips */
+    --filetype-pdf-bg: #dc2626;
+    --filetype-pdf-color: #ffffff;
+    --filetype-doc-bg: #2563eb;
+    --filetype-doc-color: #ffffff;
+    --filetype-xls-bg: #059669;
+    --filetype-xls-color: #ffffff;
+    --filetype-ppt-bg: #ea580c;
+    --filetype-ppt-color: #ffffff;
+    --filetype-zip-bg: #7c3aed;
+    --filetype-zip-color: #ffffff;
+}
+
+/* === AURORA THEME === */
+[data-theme="aurora"] {
+    /* RGB values for rgba() usage */
+    --primary-rgb: 74, 222, 128;
+    --danger-rgb: 251, 113, 133;
+    --good-rgb: 74, 222, 128;
+    --accent-rgb: 56, 189, 248;
+
+    --bg: #0a0f1a;
+    --bg-secondary: #101828;
+    --card: rgba(20, 35, 60, 0.9);
+    --card-hover: rgba(25, 45, 75, 0.95);
+
+    --text: #e8fff8;
+    --text-secondary: #a8e8d8;
+    --muted: #7ac8b8;
+
+    --primary: #4ade80;
+    --primary-hover: #22c55e;
+    --accent: #38bdf8;
+    --accent-2: #a78bfa;
+    --good: #4ade80;
+    --danger: #fb7185;
+
+    /* on #4ade80 — 9.85:1 */
+    --button-primary-fg: #062012;
+
+    --border: rgba(74, 222, 128, 0.25);
+    --border-hover: rgba(74, 222, 128, 0.45);
+
+    --header-bg: rgba(10, 15, 26, 0.95);
+    --header-blur: 12px;
+
+    --shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    --shadow-sm: 0 8px 20px rgba(0, 0, 0, 0.4);
+
+    --lesson-bg: linear-gradient(160deg, rgba(74, 222, 128, 0.2), rgba(56, 189, 248, 0.15));
+    --lesson-border: rgba(74, 222, 128, 0.35);
+
+    --gradient-primary: linear-gradient(180deg, #4ade80, #22c55e);
+    --gradient-card: linear-gradient(180deg, rgba(20, 45, 70, 0.9), rgba(15, 35, 55, 0.85));
+
+    --app-bg: radial-gradient(ellipse at top left, rgba(74, 222, 128, 0.15), transparent 50%),
+        radial-gradient(ellipse at bottom right, rgba(56, 189, 248, 0.1), transparent 50%),
+        #0a0f1a;
+
+    /* Badge colors for aurora theme */
+    --badge-lecture-bg: rgba(56, 189, 248, 0.2);
+    --badge-lecture-color: #38bdf8;
+    --badge-lecture-border: rgba(56, 189, 248, 0.35);
+
+    --badge-seminar-bg: rgba(74, 222, 128, 0.18);
+    --badge-seminar-color: #4ade80;
+    --badge-seminar-border: rgba(74, 222, 128, 0.35);
+
+    --badge-lab-bg: rgba(167, 139, 250, 0.18);
+    --badge-lab-color: #a78bfa;
+    --badge-lab-border: rgba(167, 139, 250, 0.35);
+
+    --badge-srs-bg: rgba(251, 191, 36, 0.18);
+    --badge-srs-color: #fbbf24;
+    --badge-srs-border: rgba(251, 191, 36, 0.35);
+
+    --badge-num-bg: rgba(74, 222, 128, 0.12);
+    --badge-num-color: #4ade80;
+    --badge-num-border: rgba(74, 222, 128, 0.25);
+
+    --badge-denom-bg: rgba(251, 113, 133, 0.12);
+    --badge-denom-color: #fb7185;
+    --badge-denom-border: rgba(251, 113, 133, 0.25);
+
+    /* Tier badges (S/A/B/C/D/E) — aurora picks greens/cyans/violets. */
+    --leaderboard-tier-s-bg: rgba(74,222,128,0.2);
+    --leaderboard-tier-s-color: #bbf7d0;
+    --leaderboard-tier-s-border: rgba(74,222,128,0.35);
+    --leaderboard-tier-a-bg: rgba(56,189,248,0.18);
+    --leaderboard-tier-a-color: #bae6fd;
+    --leaderboard-tier-a-border: rgba(56,189,248,0.34);
+    --leaderboard-tier-c-bg: rgba(167,139,250,0.18);
+    --leaderboard-tier-c-color: #ddd6fe;
+    --leaderboard-tier-c-border: rgba(167,139,250,0.34);
+    --leaderboard-tier-d-bg: rgba(251,113,133,0.18);
+    --leaderboard-tier-d-color: #fda4af;
+    --leaderboard-tier-d-border: rgba(251,113,133,0.34);
+    --leaderboard-tier-e-bg: rgba(190,24,93,0.2);
+    --leaderboard-tier-e-color: #f9a8d4;
+    --leaderboard-tier-e-border: rgba(190,24,93,0.34);
+
+    /* Leaderboard inline accents */
+    --leaderboard-error-text: #fda4af;
+    --leaderboard-status-ok-text: #86efac;
+    --leaderboard-status-error-text: #fda4af;
+    --leaderboard-my-rating-color: #c4b5fd;
+    --leaderboard-accent-emerald-gradient: linear-gradient(135deg, #34d399, #0d9488);
+    --leaderboard-accent-purple-gradient: linear-gradient(135deg, #a78bfa, #38bdf8);
+
+    /* File-type chips */
+    --filetype-pdf-bg: #dc2626;
+    --filetype-pdf-color: #ffffff;
+    --filetype-doc-bg: #2563eb;
+    --filetype-doc-color: #ffffff;
+    --filetype-xls-bg: #059669;
+    --filetype-xls-color: #ffffff;
+    --filetype-ppt-bg: #ea580c;
+    --filetype-ppt-color: #ffffff;
+    --filetype-zip-bg: #7c3aed;
+    --filetype-zip-color: #ffffff;
+}
+
+/* === SUNSET THEME === */
+[data-theme="sunset"] {
+    /* RGB values for rgba() usage */
+    --primary-rgb: 249, 115, 22;
+    --danger-rgb: 239, 68, 68;
+    --good-rgb: 74, 222, 128;
+    --accent-rgb: 251, 146, 60;
+
+    --bg: #1a1014;
+    --bg-secondary: #251820;
+    --card: rgba(50, 30, 40, 0.9);
+    --card-hover: rgba(60, 35, 50, 0.95);
+
+    --text: #fff5f0;
+    --text-secondary: #ffc8b8;
+    --muted: #d89888;
+
+    --primary: #f97316;
+    --primary-hover: #ea580c;
+    --accent: #fb923c;
+    --accent-2: #fbbf24;
+    --good: #4ade80;
+    --danger: #ef4444;
+
+    /* on #f97316 — 6.38:1 */
+    --button-primary-fg: #2a1004;
+
+    --border: rgba(249, 115, 22, 0.3);
+    --border-hover: rgba(249, 115, 22, 0.5);
+
+    --header-bg: rgba(26, 16, 20, 0.95);
+    --header-blur: 12px;
+
+    --shadow: 0 20px 40px rgba(0, 0, 0, 0.55);
+    --shadow-sm: 0 8px 20px rgba(0, 0, 0, 0.45);
+
+    --lesson-bg: linear-gradient(160deg, rgba(249, 115, 22, 0.25), rgba(251, 191, 36, 0.15));
+    --lesson-border: rgba(249, 115, 22, 0.4);
+
+    --gradient-primary: linear-gradient(180deg, #f97316, #ea580c);
+    --gradient-card: linear-gradient(180deg, rgba(60, 35, 45, 0.9), rgba(45, 25, 35, 0.85));
+
+    --app-bg: radial-gradient(ellipse at top, rgba(249, 115, 22, 0.2), transparent 60%),
+        radial-gradient(ellipse at bottom, rgba(251, 191, 36, 0.1), transparent 50%),
+        #1a1014;
+
+    /* Badge colors for sunset theme */
+    --badge-lecture-bg: rgba(251, 146, 60, 0.2);
+    --badge-lecture-color: #fb923c;
+    --badge-lecture-border: rgba(251, 146, 60, 0.35);
+
+    --badge-seminar-bg: rgba(74, 222, 128, 0.18);
+    --badge-seminar-color: #4ade80;
+    --badge-seminar-border: rgba(74, 222, 128, 0.35);
+
+    --badge-lab-bg: rgba(251, 191, 36, 0.2);
+    --badge-lab-color: #fbbf24;
+    --badge-lab-border: rgba(251, 191, 36, 0.35);
+
+    --badge-srs-bg: rgba(249, 115, 22, 0.2);
+    --badge-srs-color: #f97316;
+    --badge-srs-border: rgba(249, 115, 22, 0.35);
+
+    --badge-num-bg: rgba(74, 222, 128, 0.12);
+    --badge-num-color: #4ade80;
+    --badge-num-border: rgba(74, 222, 128, 0.25);
+
+    --badge-denom-bg: rgba(239, 68, 68, 0.12);
+    --badge-denom-color: #ef4444;
+    --badge-denom-border: rgba(239, 68, 68, 0.25);
+
+    /* Tier badges (S/A/B/C/D/E) — sunset leans warm orange/amber. */
+    --leaderboard-tier-s-bg: rgba(74,222,128,0.2);
+    --leaderboard-tier-s-color: #bbf7d0;
+    --leaderboard-tier-s-border: rgba(74,222,128,0.35);
+    --leaderboard-tier-a-bg: rgba(251,191,36,0.2);
+    --leaderboard-tier-a-color: #fde68a;
+    --leaderboard-tier-a-border: rgba(251,191,36,0.35);
+    --leaderboard-tier-c-bg: rgba(251,146,60,0.2);
+    --leaderboard-tier-c-color: #fdba74;
+    --leaderboard-tier-c-border: rgba(251,146,60,0.35);
+    --leaderboard-tier-d-bg: rgba(239,68,68,0.2);
+    --leaderboard-tier-d-color: #fca5a5;
+    --leaderboard-tier-d-border: rgba(239,68,68,0.35);
+    --leaderboard-tier-e-bg: rgba(190,24,93,0.22);
+    --leaderboard-tier-e-color: #f9a8d4;
+    --leaderboard-tier-e-border: rgba(190,24,93,0.36);
+
+    /* Leaderboard inline accents */
+    --leaderboard-error-text: #fca5a5;
+    --leaderboard-status-ok-text: #86efac;
+    --leaderboard-status-error-text: #fca5a5;
+    --leaderboard-my-rating-color: #fdba74;
+    --leaderboard-accent-emerald-gradient: linear-gradient(135deg, #f97316, #ea580c);
+    --leaderboard-accent-purple-gradient: linear-gradient(135deg, #fbbf24, #f59e0b);
+
+    /* File-type chips */
+    --filetype-pdf-bg: #dc2626;
+    --filetype-pdf-color: #ffffff;
+    --filetype-doc-bg: #2563eb;
+    --filetype-doc-color: #ffffff;
+    --filetype-xls-bg: #059669;
+    --filetype-xls-color: #ffffff;
+    --filetype-ppt-bg: #ea580c;
+    --filetype-ppt-color: #ffffff;
+    --filetype-zip-bg: #7c3aed;
+    --filetype-zip-color: #ffffff;
+}
+
+/* === MATRIX THEME === */
+[data-theme="matrix"] {
+    /* RGB values for rgba() usage */
+    --primary-rgb: 0, 255, 65;
+    --danger-rgb: 255, 51, 51;
+    --good-rgb: 0, 255, 65;
+    --accent-rgb: 57, 255, 20;
+
+    --bg: #0a0f0a;
+    --bg-secondary: #0f170f;
+    --card: rgba(15, 30, 15, 0.95);
+    --card-hover: rgba(20, 40, 20, 0.98);
+
+    --text: #00ff41;
+    --text-secondary: #00cc33;
+    --muted: #009926;
+
+    --primary: #00ff41;
+    --primary-hover: #00cc33;
+    --accent: #00ff41;
+    --accent-2: #39ff14;
+    --good: #00ff41;
+    --danger: #ff3333;
+
+    /* on #00ff41 — 12.59:1 */
+    --button-primary-fg: #052012;
+
+    --border: rgba(0, 255, 65, 0.25);
+    --border-hover: rgba(0, 255, 65, 0.45);
+
+    --header-bg: rgba(10, 15, 10, 0.95);
+    --header-blur: 8px;
+
+    --shadow: 0 0 30px rgba(0, 255, 65, 0.15);
+    --shadow-sm: 0 0 15px rgba(0, 255, 65, 0.1);
+
+    --lesson-bg: linear-gradient(180deg, rgba(0, 255, 65, 0.12), rgba(0, 255, 65, 0.06));
+    --lesson-border: rgba(0, 255, 65, 0.35);
+
+    --gradient-primary: linear-gradient(180deg, #00ff41, #00cc33);
+    --gradient-card: linear-gradient(180deg, rgba(15, 35, 15, 0.95), rgba(10, 25, 10, 0.9));
+
+    --app-bg: #0a0f0a;
+
+    /* Badge colors for matrix theme */
+    --badge-lecture-bg: rgba(0, 255, 65, 0.15);
+    --badge-lecture-color: #00ff41;
+    --badge-lecture-border: rgba(0, 255, 65, 0.3);
+
+    --badge-seminar-bg: rgba(57, 255, 20, 0.12);
+    --badge-seminar-color: #39ff14;
+    --badge-seminar-border: rgba(57, 255, 20, 0.28);
+
+    --badge-lab-bg: rgba(0, 204, 51, 0.15);
+    --badge-lab-color: #00cc33;
+    --badge-lab-border: rgba(0, 204, 51, 0.3);
+
+    --badge-srs-bg: rgba(0, 255, 65, 0.18);
+    --badge-srs-color: #00ff41;
+    --badge-srs-border: rgba(0, 255, 65, 0.35);
+
+    --badge-num-bg: rgba(57, 255, 20, 0.1);
+    --badge-num-color: #39ff14;
+    --badge-num-border: rgba(57, 255, 20, 0.22);
+
+    --badge-denom-bg: rgba(255, 51, 51, 0.12);
+    --badge-denom-color: #ff3333;
+    --badge-denom-border: rgba(255, 51, 51, 0.25);
+
+    /* Tier badges (S/A/B/C/D/E) — matrix stays in the green family, danger ones go red. */
+    --leaderboard-tier-s-bg: rgba(0,255,65,0.18);
+    --leaderboard-tier-s-color: #00ff41;
+    --leaderboard-tier-s-border: rgba(0,255,65,0.34);
+    --leaderboard-tier-a-bg: rgba(57,255,20,0.15);
+    --leaderboard-tier-a-color: #39ff14;
+    --leaderboard-tier-a-border: rgba(57,255,20,0.32);
+    --leaderboard-tier-c-bg: rgba(0,204,51,0.16);
+    --leaderboard-tier-c-color: #00cc33;
+    --leaderboard-tier-c-border: rgba(0,204,51,0.32);
+    --leaderboard-tier-d-bg: rgba(255,51,51,0.18);
+    --leaderboard-tier-d-color: #ff8a8a;
+    --leaderboard-tier-d-border: rgba(255,51,51,0.34);
+    --leaderboard-tier-e-bg: rgba(255,51,51,0.22);
+    --leaderboard-tier-e-color: #ffb3b3;
+    --leaderboard-tier-e-border: rgba(255,51,51,0.4);
+
+    /* Leaderboard inline accents */
+    --leaderboard-error-text: #ff8a8a;
+    --leaderboard-status-ok-text: #00ff41;
+    --leaderboard-status-error-text: #ff8a8a;
+    --leaderboard-my-rating-color: #39ff14;
+    --leaderboard-accent-emerald-gradient: linear-gradient(135deg, #00ff41, #00cc33);
+    --leaderboard-accent-purple-gradient: linear-gradient(135deg, #39ff14, #00ff41);
+
+    /* File-type chips — keep saturated, white text still readable. */
+    --filetype-pdf-bg: #dc2626;
+    --filetype-pdf-color: #ffffff;
+    --filetype-doc-bg: #2563eb;
+    --filetype-doc-color: #ffffff;
+    --filetype-xls-bg: #059669;
+    --filetype-xls-color: #ffffff;
+    --filetype-ppt-bg: #ea580c;
+    --filetype-ppt-color: #ffffff;
+    --filetype-zip-bg: #7c3aed;
+    --filetype-zip-color: #ffffff;
+}
+
+/* === PASTEL THEME === */
+[data-theme="pastel"] {
+    /* RGB values for rgba() usage */
+    --primary-rgb: 232, 121, 169;
+    --danger-rgb: 252, 165, 165;
+    --good-rgb: 134, 239, 172;
+    --accent-rgb: 165, 180, 252;
+
+    --bg: #fef7f0;
+    --bg-secondary: #ffffff;
+    --card: rgba(255, 255, 255, 0.98);
+    --card-hover: rgba(255, 255, 255, 1);
+
+    --text: #5a4a5c;
+    --text-secondary: #7a6a7c;
+    --muted: #9a8a9c;
+
+    --primary: #e879a9;
+    --primary-hover: #d6689a;
+    --accent: #a5b4fc;
+    --accent-2: #fcd34d;
+    --good: #86efac;
+    --danger: #fca5a5;
+
+    /* on #e879a9 — 5.98:1 */
+    --button-primary-fg: #3a1226;
+
+    --border: rgba(232, 121, 169, 0.25);
+    --border-hover: rgba(232, 121, 169, 0.45);
+
+    --header-bg: rgba(255, 255, 255, 0.95);
+    --header-blur: 12px;
+
+    --shadow: 0 20px 40px rgba(90, 74, 92, 0.12);
+    --shadow-sm: 0 8px 20px rgba(90, 74, 92, 0.08);
+
+    --lesson-bg: linear-gradient(160deg, rgba(165, 180, 252, 0.25), rgba(232, 121, 169, 0.15));
+    --lesson-border: rgba(165, 180, 252, 0.4);
+
+    --gradient-primary: linear-gradient(180deg, #e879a9, #d6689a);
+    --gradient-card: linear-gradient(180deg, #fff5f8, #f0f4ff);
+
+    --app-bg: linear-gradient(135deg, #fef7f0 0%, #fff0f5 50%, #f0f4ff 100%);
+
+    /* Badge colors for pastel theme (light background) */
+    --badge-lecture-bg: rgba(165, 180, 252, 0.3);
+    --badge-lecture-color: #6366f1;
+    --badge-lecture-border: rgba(165, 180, 252, 0.5);
+
+    --badge-seminar-bg: rgba(134, 239, 172, 0.25);
+    --badge-seminar-color: #22c55e;
+    --badge-seminar-border: rgba(134, 239, 172, 0.45);
+
+    --badge-lab-bg: rgba(252, 211, 77, 0.25);
+    --badge-lab-color: #d97706;
+    --badge-lab-border: rgba(252, 211, 77, 0.45);
+
+    --badge-srs-bg: rgba(232, 121, 169, 0.2);
+    --badge-srs-color: #db2777;
+    --badge-srs-border: rgba(232, 121, 169, 0.4);
+
+    --badge-num-bg: rgba(134, 239, 172, 0.18);
+    --badge-num-color: #22c55e;
+    --badge-num-border: rgba(134, 239, 172, 0.35);
+
+    --badge-denom-bg: rgba(252, 165, 165, 0.2);
+    --badge-denom-color: #ef4444;
+    --badge-denom-border: rgba(252, 165, 165, 0.4);
+
+    /* Weekend card (pastel — light mode) */
+    --weekend-light-bg:
+        radial-gradient(circle at 20% 30%, rgba(232,121,169,0.18), transparent 35%),
+        radial-gradient(circle at 80% 70%, rgba(165,180,252,0.18), transparent 35%),
+        linear-gradient(145deg, #fff5f8, #f0f4ff);
+    --weekend-light-border: rgba(232, 121, 169, 0.28);
+    --weekend-light-shadow: 0 22px 42px rgba(232, 121, 169, 0.12);
+    --weekend-light-title: #5a4a5c;
+    --weekend-light-label: #e879a9;
+    --weekend-light-subtitle: rgba(90, 74, 92, 0.72);
+    --weekend-light-hint: rgba(154, 138, 156, 0.76);
+    --weekend-light-dot: rgba(232, 121, 169, 0.3);
+    --weekend-light-pip: rgba(232, 121, 169, 0.25);
+
+    /* Tier badges (S/A/B/C/D/E) — pastel uses soft tints on white surface. */
+    --leaderboard-tier-s-bg: linear-gradient(145deg, rgba(220,252,231,0.92), rgba(240,253,244,0.96));
+    --leaderboard-tier-s-color: #15803d;
+    --leaderboard-tier-s-border: rgba(134,239,172,0.5);
+    --leaderboard-tier-a-bg: linear-gradient(145deg, rgba(207,250,254,0.92), rgba(236,254,255,0.96));
+    --leaderboard-tier-a-color: #0e7490;
+    --leaderboard-tier-a-border: rgba(125,211,252,0.5);
+    --leaderboard-tier-c-bg: linear-gradient(145deg, rgba(255,237,213,0.92), rgba(255,247,237,0.96));
+    --leaderboard-tier-c-color: #c2410c;
+    --leaderboard-tier-c-border: rgba(253,186,116,0.5);
+    --leaderboard-tier-d-bg: linear-gradient(145deg, rgba(254,226,226,0.92), rgba(255,241,242,0.96));
+    --leaderboard-tier-d-color: #b91c1c;
+    --leaderboard-tier-d-border: rgba(252,165,165,0.5);
+    --leaderboard-tier-e-bg: linear-gradient(145deg, rgba(252,231,243,0.92), rgba(253,242,248,0.96));
+    --leaderboard-tier-e-color: #be185d;
+    --leaderboard-tier-e-border: rgba(244,114,182,0.5);
+
+    /* Leaderboard inline accents */
+    --leaderboard-error-text: #db2777;
+    --leaderboard-status-ok-text: #15803d;
+    --leaderboard-status-error-text: #db2777;
+    --leaderboard-my-rating-color: #7c3aed;
+    --leaderboard-accent-emerald-gradient: linear-gradient(135deg, #34d399, #14b8a6);
+    --leaderboard-accent-purple-gradient: linear-gradient(135deg, #c084fc, #a855f7);
+
+    /* File-type chips */
+    --filetype-pdf-bg: #dc2626;
+    --filetype-pdf-color: #ffffff;
+    --filetype-doc-bg: #2563eb;
+    --filetype-doc-color: #ffffff;
+    --filetype-xls-bg: #059669;
+    --filetype-xls-color: #ffffff;
+    --filetype-ppt-bg: #ea580c;
+    --filetype-ppt-color: #ffffff;
+    --filetype-zip-bg: #7c3aed;
+    --filetype-zip-color: #ffffff;
+}
+
+/* === REFERRAL NEBULA THEME === */
+[data-theme="referral-nebula"] {
+    --primary-rgb: 129, 140, 248;
+    --danger-rgb: 251, 113, 133;
+    --good-rgb: 45, 212, 191;
+    --accent-rgb: 244, 114, 182;
+
+    --bg: #090b1d;
+    --bg-secondary: #11142d;
+    --card: rgba(20, 24, 52, 0.92);
+    --card-hover: rgba(28, 33, 70, 0.96);
+
+    --text: #f3f0ff;
+    --text-secondary: #d6d1ff;
+    --muted: #a7a3d8;
+
+    --primary: #818cf8;
+    --primary-hover: #6366f1;
+    --accent: #f472b6;
+    --accent-2: #2dd4bf;
+    --good: #2dd4bf;
+    --danger: #fb7185;
+
+    /* on #818cf8 — 7.04:1 */
+    --button-primary-fg: #000000;
+
+    --border: rgba(129, 140, 248, 0.28);
+    --border-hover: rgba(244, 114, 182, 0.42);
+
+    --header-bg: rgba(13, 16, 38, 0.92);
+    --header-blur: 14px;
+
+    --shadow: 0 26px 58px rgba(4, 6, 24, 0.58);
+    --shadow-sm: 0 10px 26px rgba(4, 6, 24, 0.42);
+
+    --lesson-bg: linear-gradient(160deg, rgba(129, 140, 248, 0.2), rgba(244, 114, 182, 0.1));
+    --lesson-border: rgba(129, 140, 248, 0.32);
+
+    --gradient-primary: linear-gradient(180deg, #8b5cf6, #6366f1);
+    --gradient-card: linear-gradient(180deg, rgba(24, 28, 60, 0.9), rgba(14, 18, 44, 0.96));
+
+    --app-bg:
+        radial-gradient(900px 560px at 82% -12%, rgba(129,140,248,0.24) 0%, rgba(9,11,29,0) 55%),
+        radial-gradient(780px 520px at -8% 108%, rgba(244,114,182,0.16) 0%, rgba(9,11,29,0) 58%),
+        linear-gradient(180deg, #090b1d 0%, #11142d 100%);
+}
+
+/* === REFERRAL SHERBET THEME === */
+[data-theme="referral-sherbet"] {
+    --primary-rgb: 236, 97, 103;
+    --danger-rgb: 220, 38, 38;
+    --good-rgb: 34, 197, 94;
+    --accent-rgb: 251, 146, 60;
+
+    --bg: #fff7ed;
+    --bg-secondary: #ffffff;
+    --card: rgba(255, 255, 255, 0.96);
+    --card-hover: rgba(255, 255, 255, 1);
+
+    --text: #34251f;
+    --text-secondary: #6b4e43;
+    --muted: #8b7065;
+
+    --primary: #ec6167;
+    --primary-hover: #db4d55;
+    --accent: #fb923c;
+    --accent-2: #facc15;
+    --good: #22c55e;
+    --danger: #dc2626;
+
+    /* on #ec6167 — 5.31:1 */
+    --button-primary-fg: #380a0e;
+
+    --border: rgba(236, 97, 103, 0.22);
+    --border-hover: rgba(251, 146, 60, 0.38);
+
+    --header-bg: rgba(255, 250, 245, 0.9);
+    --header-blur: 12px;
+
+    --shadow: 0 24px 48px rgba(165, 89, 59, 0.16);
+    --shadow-sm: 0 10px 22px rgba(165, 89, 59, 0.1);
+
+    --lesson-bg: linear-gradient(160deg, rgba(251, 146, 60, 0.14), rgba(236, 97, 103, 0.08));
+    --lesson-border: rgba(236, 97, 103, 0.22);
+
+    --gradient-primary: linear-gradient(180deg, #fb7185, #f97316);
+    --gradient-card: linear-gradient(180deg, rgba(255,255,255,0.96), rgba(255,247,237,0.98));
+
+    --app-bg:
+        radial-gradient(900px 540px at 92% -10%, rgba(251,146,60,0.18) 0%, rgba(255,247,237,0) 50%),
+        radial-gradient(760px 440px at -8% 100%, rgba(244,114,182,0.12) 0%, rgba(255,247,237,0) 52%),
+        linear-gradient(180deg, #fff7ed 0%, #fff1f2 100%);
+}
+
+/* === SUPPORTER MIDNIGHT THEME === */
+[data-theme="supporter-midnight"] {
+    --primary-rgb: 244, 186, 74;
+    --danger-rgb: 255, 120, 120;
+    --good-rgb: 110, 231, 183;
+    --accent-rgb: 125, 211, 252;
+
+    --bg: #08111f;
+    --bg-secondary: #0f1a30;
+    --card: rgba(16, 27, 52, 0.92);
+    --card-hover: rgba(20, 34, 66, 0.98);
+
+    --text: #f6f3eb;
+    --text-secondary: #ddd4bd;
+    --muted: #a8a18d;
+
+    --primary: #f4ba4a;
+    --primary-hover: #e6ab39;
+    --accent: #7dd3fc;
+    --accent-2: #f59e0b;
+    --good: #6ee7b7;
+    --danger: #ff7878;
+
+    /* on #f4ba4a — 9.37:1 */
+    --button-primary-fg: #2a1d06;
+
+    --border: rgba(244, 186, 74, 0.22);
+    --border-hover: rgba(244, 186, 74, 0.42);
+
+    --header-bg: rgba(12, 22, 40, 0.92);
+    --header-blur: 14px;
+
+    --shadow: 0 24px 50px rgba(4, 10, 22, 0.55);
+    --shadow-sm: 0 10px 24px rgba(4, 10, 22, 0.4);
+
+    --lesson-bg: linear-gradient(160deg, rgba(244, 186, 74, 0.16), rgba(125, 211, 252, 0.08));
+    --lesson-border: rgba(244, 186, 74, 0.24);
+
+    --gradient-primary: linear-gradient(180deg, #f4ba4a, #d9901f);
+    --gradient-card: linear-gradient(180deg, rgba(18, 30, 56, 0.9), rgba(13, 24, 46, 0.96));
+
+    --app-bg:
+        radial-gradient(900px 520px at 82% -10%, rgba(244,186,74,0.18) 0%, rgba(8,17,31,0) 55%),
+        radial-gradient(760px 480px at 0% 100%, rgba(125,211,252,0.12) 0%, rgba(8,17,31,0) 58%),
+        linear-gradient(180deg, #08111f 0%, #0b1527 100%);
+}
+
+/* === SUPPORTER PAPER THEME === */
+[data-theme="supporter-paper"] {
+    --primary-rgb: 68, 152, 137;
+    --danger-rgb: 220, 90, 90;
+    --good-rgb: 34, 197, 94;
+    --accent-rgb: 125, 211, 252;
+
+    --bg: #f6fbf7;
+    --bg-secondary: #ffffff;
+    --card: rgba(255, 255, 252, 0.97);
+    --card-hover: rgba(255, 255, 255, 1);
+
+    --text: #263238;
+    --text-secondary: #4f625c;
+    --muted: #73857f;
+
+    --primary: #449889;
+    --primary-hover: #367b6f;
+    --accent: #7dd3fc;
+    --accent-2: #8dd3c7;
+    --good: #22c55e;
+    --danger: #dc5a5a;
+
+    /* on #449889 — 5.48:1 */
+    --button-primary-fg: #04140f;
+
+    --border: rgba(68, 152, 137, 0.22);
+    --border-hover: rgba(68, 152, 137, 0.36);
+
+    --header-bg: rgba(255, 255, 252, 0.9);
+    --header-blur: 12px;
+
+    --shadow: 0 22px 44px rgba(94, 126, 117, 0.16);
+    --shadow-sm: 0 10px 22px rgba(94, 126, 117, 0.1);
+
+    --lesson-bg: linear-gradient(160deg, rgba(68, 152, 137, 0.12), rgba(125, 211, 252, 0.08));
+    --lesson-border: rgba(68, 152, 137, 0.18);
+
+    --gradient-primary: linear-gradient(180deg, #55b29f, #449889);
+    --gradient-card: linear-gradient(180deg, rgba(255,255,252,0.96), rgba(246,251,247,0.98));
+
+    --app-bg:
+        radial-gradient(900px 540px at 100% 0%, rgba(68,152,137,0.10) 0%, rgba(246,251,247,0) 48%),
+        radial-gradient(720px 420px at 0% 100%, rgba(125,211,252,0.10) 0%, rgba(246,251,247,0) 52%),
+        linear-gradient(180deg, #f6fbf7 0%, #edf7f1 100%);
+
+    --status-warning-bg: linear-gradient(145deg, rgba(254, 243, 199, 0.92), rgba(255, 251, 235, 0.98));
+    --status-warning-color: #b45309;
+    --status-warning-border: rgba(217, 119, 6, 0.24);
+}
+
+/* =============================================
+   GLOBAL THEME APPLICATION
+   ============================================= */
+
+body {
+    background: var(--bg);
+    color: var(--text);
+}
+
+/* Apply gradient background through pseudo element */
+body::after {
+    background: var(--app-bg);
+}
