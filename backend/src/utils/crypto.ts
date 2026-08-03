@@ -2,14 +2,28 @@ import crypto from 'node:crypto';
 import CryptoJS from 'crypto-js';
 
 const ALGORITHM = 'aes-256-cbc';
-const FALLBACK_ENCRYPTION_KEY = '0123456789abcdef0123456789abcdef';
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || FALLBACK_ENCRYPTION_KEY;
 const IV_LENGTH = 16;
 
-// Refuse to use the dev fallback key in production — it would make encrypted
-// data trivially decryptable by anyone with source access.
+// Детерминированный dev-фолбэк: позволяет поднять приложение локально без
+// настройки env. Для реальных данных использовать нельзя — им зашифрованное
+// тривиально расшифровывается любым, у кого есть исходники.
+const DEV_FALLBACK_KEY = '0123456789abcdef0123456789abcdef';
+
+// В production ключ обязателен — иначе креды шифровались бы публично-известным
+// ключом, то есть фактически без защиты.
 if (process.env.NODE_ENV === 'production' && !process.env.ENCRYPTION_KEY) {
     throw new Error('[Crypto] FATAL: ENCRYPTION_KEY env var is required in production.');
+}
+
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || DEV_FALLBACK_KEY;
+
+// Вне production молчаливый фолбэк — грабли для само-хостера: предупреждаем явно,
+// чтобы «используется небезопасный ключ» не осталось незамеченным (в тестах молчим).
+if (!process.env.ENCRYPTION_KEY && process.env.NODE_ENV !== 'test') {
+    console.warn(
+        '[Crypto] WARNING: ENCRYPTION_KEY не задан — используется небезопасный dev-фолбэк. '
+        + 'Для любого реального развёртывания задайте ENCRYPTION_KEY (32 байта).'
+    );
 }
 
 // Validate key length for native crypto
