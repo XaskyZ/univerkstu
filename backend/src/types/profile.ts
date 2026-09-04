@@ -1,3 +1,25 @@
+/**
+ * Profile Types - типы профиля студента и чистые хелперы нормализации.
+ *
+ * Раньше жили в parsers/profile.ts вместе с HTML-парсерами univer.kstu.kz.
+ * Univer отключён навсегда, парсеры удалены; типы описывают форму данных,
+ * которая по-прежнему лежит в кэше профиля (`profile_<userId>`) и отдаётся
+ * фронтенду. Источник новых данных — только Platonus (services/profile.ts).
+ */
+
+export interface StudentProfile {
+    fullName: string;
+    formOfEducation: string;
+    educationLevel: string;
+    department: string;
+    educationStep: string;
+    faculty: string;
+    specialty: string;
+    course: number;
+    transferGPA: number;
+    questionnaire?: StudentQuestionnaire;
+}
+
 export interface ProfileDetailEntry {
     label: string;
     value: string;
@@ -56,6 +78,53 @@ export interface StudentQuestionnaire {
     sections: ProfileSection[];
     orders: ProfileOrderRecord[];
     summary: StudentQuestionnaireSummary;
+}
+
+export interface Subject {
+    name: string;
+    credits: number;
+    hours: number;
+    lectureHours: number;
+    seminarHours: number;
+    labHours: number;
+    srspHours: number;
+    srsHours: number;
+    teachers: {
+        lecture?: string;
+        seminar?: string;
+        lab?: string;
+        srsp?: string;
+        practice?: string;
+    };
+    controlType: string;
+}
+
+export interface Semester {
+    number: number;
+    subjects: Subject[];
+}
+
+export interface IUP {
+    semesters: Semester[];
+}
+
+export interface GradeRecord {
+    subject: string;
+    credits: number;
+    rk1?: number;
+    rk2?: number;
+    pa?: number;
+    total: number;
+    gpa: number;
+    letterGrade: string;
+    description: string;
+}
+
+export interface Attestation {
+    currentGPA: number;
+    currentYear: string;
+    creditsEarned: number;
+    grades: GradeRecord[];
 }
 
 export interface TranscriptSubjectRecord {
@@ -196,7 +265,7 @@ export interface StudentEducPlanCycleCounts {
 }
 
 export interface StudentEducPlanSemesterOverview {
-    semesterNumber: number | null;
+    semesterNumber: number;
     totalSubjects: number;
     totalCredits: number;
     controlTypes: string[];
@@ -226,56 +295,104 @@ export interface StudentAcademicOptions {
     };
 }
 
-export interface StudentProfile {
-    fullName: string;
-    formOfEducation: string;
-    educationLevel: string;
-    department: string;
-    educationStep: string;
-    faculty: string;
-    specialty: string;
-    groupName?: string;
-    course: number;
-    transferGPA: number;
-    questionnaire?: StudentQuestionnaire;
+// === Чистые хелперы нормализации (без HTML/сети) ===
+
+export function cleanText(value: string | undefined | null): string {
+    return (value || '')
+        .replace(/\u00a0/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
 }
 
-export interface AttestationGrade {
-    subject: string;
-    credits: number;
-    rk1?: number;
-    rk2?: number;
-    pa?: number;
-    total: number;
-    gpa: number;
-    letterGrade: string;
-    description: string;
+export function normalizeSectionTitle(title: string): string {
+    return cleanText(title)
+        .replace(/[_]+/g, ' ')
+        .replace(/\s+/g, ' ')
+        .replace(/[:：]\s*$/, '')
+        .trim();
 }
 
-export interface Attestation {
-    currentGPA: number;
-    currentYear: string;
-    creditsEarned: number;
-    grades: AttestationGrade[];
+export function normalizeLabel(label: string): string {
+    return cleanText(label)
+        .replace(/^[•·\-\u2022]+/, '')
+        .replace(/[:：]\s*$/, '')
+        .trim();
 }
 
-export interface ProfileData {
-    profile: StudentProfile;
-    attestation: Attestation;
-    iup?: unknown;
-    transcript?: StudentTranscript | null;
-    recbook?: StudentRecbook | null;
-    practice?: StudentPractice | null;
-    advisor?: StudentAdvisor | null;
-    educPlan?: StudentEducPlan | null;
-    academicOptions?: StudentAcademicOptions | null;
-    meta?: {
-        parsedAt: string;
-        userId: string;
-    };
-    /** 'cache' — legacy-профиль из сохранённого кэша; 'platonus' — legacy-разделов нет. */
-    source?: 'platonus' | 'cache';
-    /** PROFILE_SOURCE_UNAVAILABLE — источник univer.kstu.kz отключён, часть разделов пуста. */
-    errorCode?: string;
-    message?: string;
+export function sectionKey(title: string): string {
+    return normalizeSectionTitle(title)
+        .toLowerCase()
+        .replace(/[^a-zа-яё0-9]+/gi, '_')
+        .replace(/^_+|_+$/g, '');
+}
+
+export function pickSectionValue(
+    sections: ProfileSection[],
+    sectionMatcher: (title: string, key: string) => boolean,
+    labelMatcher: (label: string) => boolean
+): string | null {
+    for (const section of sections) {
+        if (!sectionMatcher(section.title, section.key)) continue;
+        for (const entry of section.entries) {
+            if (labelMatcher(entry.label)) {
+                return entry.value || null;
+            }
+        }
+    }
+    return null;
+}
+
+export function parseIntSafe(value: string | null | undefined): number {
+    const cleaned = cleanText(value);
+    const match = cleaned.match(/-?\d+/);
+    if (!match) return 0;
+    const parsed = Number.parseInt(match[0], 10);
+    return Number.isFinite(parsed) ? parsed : 0;
+}
+
+export function parseNumberSafe(value: string | null | undefined): number | null {
+    const cleaned = cleanText(value);
+    if (!cleaned) return null;
+    const normalized = cleaned.replace(',', '.').match(/-?\d+(?:\.\d+)?/);
+    if (!normalized) return null;
+    const parsed = Number.parseFloat(normalized[0]);
+    return Number.isFinite(parsed) ? parsed : null;
+}
+
+export function readPairTableSummary(rows: string[][]): Record<string, string> {
+    const pairs: Record<string, string> = {};
+    for (const cells of rows) {
+        for (let i = 0; i < cells.length - 1; i += 2) {
+            const label = normalizeLabel(cells[i]);
+            const value = cleanText(cells[i + 1]);
+            if (!label) continue;
+            pairs[label] = value;
+        }
+    }
+    return pairs;
+}
+
+export function parseEducPlanValue(text: string, label: string): string | null {
+    const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    // Note on the trailing `(?=\\s|$)` instead of `\\b`: JS regex `\\b` is defined on the
+    // ASCII word-char class, so "Семестр\\b" never matches (Cyrillic letters aren't \\w).
+    // The whitespace-or-end lookahead achieves the same intent without relying on \\b.
+    const match = text.match(new RegExp(`${escaped}:\\s*(.+?)(?=\\s+[А-ЯA-ZЁІҚҢҒҮҰӨҺ][^:]{1,60}:|\\s+\\d+\\s+Семестр(?=\\s|$)|$)`));
+    return match?.[1]?.trim() || null;
+}
+
+export function pickEducationSectionValue(questionnaire: StudentQuestionnaire, needle: string): string | null {
+    return pickSectionValue(
+        questionnaire.sections,
+        (_title, key) => key.includes('обучение'),
+        (label) => label.toLowerCase().includes(needle.toLowerCase())
+    );
+}
+
+export function parseCourseValue(value: string | null): number | null {
+    if (!value) return null;
+    const match = value.match(/\d+/);
+    if (!match) return null;
+    const parsed = Number.parseInt(match[0], 10);
+    return Number.isFinite(parsed) ? parsed : null;
 }

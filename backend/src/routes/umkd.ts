@@ -1,22 +1,37 @@
 /**
- * Routes для УМКД
+ * Routes для УМКД.
+ *
+ * Источник УМКД (univer.kstu.kz/student/umkd) отключён навсегда: маршруты
+ * отдают только ранее сохранённые списки (`umkd:<userId>`, файлы в R2) и
+ * отвечают 503 + UMKD_SOURCE_UNAVAILABLE на любую попытку обновления.
  */
 
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { parseUMKD, UMKD } from '../parsers/umkd.js';
-import { getCachedData, setCachedData } from '../db/mongo.js';
+import {
+    type UMKD,
+    UMKD_SOURCE_UNAVAILABLE,
+    UMKD_SOURCE_UNAVAILABLE_MESSAGE,
+} from '../services/umkd-types.js';
+import { getCacheEntry, setCachedData } from '../db/mongo.js';
 import { logAction } from '../utils/actionLog.js';
-import { getAcademicContext, type AcademicContextResponse } from '../services/academic-context.js';
-import { getUserPassword } from '../services/users.js';
+import type { AcademicContextResponse } from '../services/academic-context.js';
 import { getOrParseExamQuestions } from '../services/umkd-parse-questions.js';
 import { canAccessFile } from '../services/file-access.js';
 
-const CACHE_TTL_MS = 24 * 60 * 60 * 1000; // УМКД кешируем на 24 часа (в миллисекундах)
+/**
+ * Сохранённый список УМКД пересобрать негде — продлеваем хранение, когда
+ * отдаём просроченную запись (раньше TTL был 24 часа под ежедневный парсинг).
+ */
+const CACHE_TTL_MS = 365 * 24 * 60 * 60 * 1000;
 
-interface UMKDResult {
-    umkd: UMKD | null;
-    cached: boolean;
-    error?: string;
+interface UMKDCacheHit {
+    umkd: UMKD;
+    /** true — запись формально просрочена, но это всё, что осталось. */
+    stale: boolean;
+}
+
+function umkdCacheKey(userId: string): string {
+    return `umkd:${userId}`;
 }
 
 export function getUmkdPeriodOverrides(context: AcademicContextResponse | null): { year?: string; semester?: string } {
@@ -40,71 +55,41 @@ export function getUmkdPeriodOverrides(context: AcademicContextResponse | null):
     };
 }
 
-async function getUMKD(userId: string, forceRefresh = false): Promise<UMKDResult> {
-    const cacheKey = `umkd:${userId}`;
+/**
+ * Ранее сохранённый УМКД пользователя (свежий или просроченный). Просроченную
+ * запись продлеваем, чтобы её не выкинула чистка кэша.
+ */
+async function getCachedUMKD(userId: string): Promise<UMKDCacheHit | null> {
+    const cacheKey = umkdCacheKey(userId);
+    const entry = await getCacheEntry<UMKD>(cacheKey);
+    if (!entry?.data) {
+        return null;
+    }
 
-    // Проверяем кеш, если не нужно принудительное обновление
-    if (!forceRefresh) {
-        const cached = await getCachedData<UMKD>(cacheKey);
-        if (cached) {
-            console.log(`[UMKD Service] Cache hit for ${userId}`);
-            return { umkd: cached, cached: true };
+    const stale = entry.expiresAt.getTime() <= Date.now();
+    if (stale) {
+        try {
+            await setCachedData(cacheKey, entry.data, CACHE_TTL_MS);
+        } catch (error) {
+            console.error(`[UMKD Service] Failed to extend cache for ${userId}:`, error);
         }
     }
 
-    const password = await getUserPassword(userId);
-    if (!password) {
-        return { umkd: null, cached: false, error: 'Требуется повторная авторизация' };
-    }
-
-    try {
-        const academicContextResult = await getAcademicContext(userId, false);
-        const umkdPeriod = getUmkdPeriodOverrides(academicContextResult.context);
-
-        console.log(`[UMKD Service] Parsing UMKD for ${userId}...`);
-        const result = await parseUMKD(userId, password, umkdPeriod);
-
-        if (!result.success || !result.data) {
-            return { umkd: null, cached: false, error: result.error || 'Parse failed' };
-        }
-
-        // Добавляем метаданные кеша
-        const umkdWithCache: UMKD = {
-            ...result.data,
-            meta: {
-                ...result.data.meta,
-                parsedAt: new Date().toISOString(),
-            },
-        };
-
-        // Сохраняем в кеш
-        await setCachedData(cacheKey, umkdWithCache, CACHE_TTL_MS);
-
-        return { umkd: umkdWithCache, cached: false };
-    } catch (error) {
-        console.error('[UMKD Service] Error:', error);
-        return { umkd: null, cached: false, error: 'Failed to parse UMKD' };
-    }
+    console.log(`[UMKD Service] Cache hit for ${userId}${stale ? ' (stale, extended)' : ''}`);
+    return { umkd: entry.data, stale };
 }
 
-export async function umkdRoutes(app: FastifyInstance) {
-    const mapUmkdError = (error: string) => {
-        if (error.includes('Требуется повторная авторизация') || error.includes('Пользователь не найден')) {
-            return { status: 401, errorCode: 'AUTH_RELOGIN_REQUIRED' };
-        }
-        if (
-            error.includes('Сессия истекла') ||
-            error.includes('Ошибка авторизации') ||
-            error.includes('HTTP error: 401')
-        ) {
-            return { status: 401, errorCode: 'AUTH_RELOGIN_REQUIRED' };
-        }
-        return { status: 502, errorCode: 'UPSTREAM_UNAVAILABLE' };
-    };
+const sourceUnavailablePayload = {
+    success: false as const,
+    error: UMKD_SOURCE_UNAVAILABLE_MESSAGE,
+    errorCode: UMKD_SOURCE_UNAVAILABLE,
+};
 
+export async function umkdRoutes(app: FastifyInstance) {
     /**
      * GET /api/v3/umkd
-     * Получение УМКД текущего пользователя
+     * Ранее сохранённый УМКД текущего пользователя. `refresh=true` → 503:
+     * источника больше нет.
      */
     app.get('/umkd', {
         preHandler: [app.authenticate as any],
@@ -116,30 +101,19 @@ export async function umkdRoutes(app: FastifyInstance) {
         const forceRefresh = request.query.refresh === 'true';
 
         try {
-            const result = await getUMKD(userId, forceRefresh);
-
-            if (result.error) {
-                const mapped = mapUmkdError(result.error);
-                return reply.status(mapped.status).send({
-                    success: false,
-                    error: result.error,
-                    errorCode: mapped.errorCode,
-                });
+            if (!forceRefresh) {
+                const hit = await getCachedUMKD(userId);
+                if (hit) {
+                    return {
+                        success: true,
+                        data: hit.umkd,
+                        cached: true,
+                        stale: hit.stale,
+                    };
+                }
             }
 
-            if (!result.umkd) {
-                return reply.status(404).send({
-                    success: false,
-                    error: 'УМКД не найдено',
-                });
-            }
-
-            return {
-                success: true,
-                data: result.umkd,
-                cached: result.cached,
-            };
-
+            return reply.status(503).send(sourceUnavailablePayload);
         } catch (error) {
             console.error('[UMKD Route] Error:', error);
             return reply.status(500).send({
@@ -151,7 +125,7 @@ export async function umkdRoutes(app: FastifyInstance) {
 
     /**
      * POST /api/v3/umkd/refresh
-     * Принудительное обновление УМКД
+     * Обновление невозможно — источник отключён.
      */
     app.post('/umkd/refresh', {
         preHandler: [app.authenticate as any],
@@ -160,41 +134,14 @@ export async function umkdRoutes(app: FastifyInstance) {
         reply: FastifyReply
     ) => {
         const userId = (request.user as any).userId;
-
-        try {
-            const result = await getUMKD(userId, true);
-
-            if (result.error) {
-                logAction(userId, 'umkd_refresh', `UMKD refresh failed: ${result.error}`, { result: 'failed' });
-                const mapped = mapUmkdError(result.error);
-                return reply.status(mapped.status).send({
-                    success: false,
-                    error: result.error,
-                    errorCode: mapped.errorCode,
-                });
-            }
-
-            logAction(userId, 'umkd_refresh', 'UMKD refreshed successfully', { result: 'success' });
-            return {
-                success: true,
-                data: result.umkd,
-                cached: false,
-                message: 'УМКД обновлено',
-            };
-
-        } catch (error) {
-            console.error('[UMKD Route] Error:', error);
-            logAction(userId, 'umkd_refresh', 'UMKD refresh failed because of internal server error', { result: 'failed' });
-            return reply.status(500).send({
-                success: false,
-                error: 'Ошибка обновления УМКД',
-            });
-        }
+        logAction(userId, 'umkd_refresh', `UMKD refresh rejected: ${UMKD_SOURCE_UNAVAILABLE}`, { result: 'failed' });
+        return reply.status(503).send(sourceUnavailablePayload);
     });
 
     /**
      * GET /api/v3/umkd/stream
-     * Стрим с прогрессом получения УМКД (SSE)
+     * SSE-поток: отдаёт сохранённый УМКД одним событием `complete`, либо
+     * событие `error` с UMKD_SOURCE_UNAVAILABLE.
      */
     app.get('/umkd/stream', {
         preHandler: [app.authenticate as any],
@@ -224,76 +171,32 @@ export async function umkdRoutes(app: FastifyInstance) {
 
         (async () => {
             try {
-                // 1. Проверяем кеш (если не forceRefresh)
                 if (!forceRefresh) {
-                    const cacheKey = `umkd:${userId}`;
-                    const cached = await getCachedData<UMKD>(cacheKey);
-                    if (cached) {
-                        console.log(`[UMKD Stream] Cache hit for ${userId}`);
+                    const hit = await getCachedUMKD(userId);
+                    if (hit) {
                         sendEvent({ type: 'progress', status: 'Загрузка из кеша', percent: 100 });
-                        sendEvent({ type: 'complete', data: cached });
+                        sendEvent({ type: 'complete', data: hit.umkd, stale: hit.stale });
                         reply.raw.end();
                         return;
                     }
                 }
 
-                const password = await getUserPassword(userId);
-                if (!password) {
-                    sendEvent({
-                        type: 'error',
-                        error: 'Требуется повторная авторизация',
-                        errorCode: 'AUTH_RELOGIN_REQUIRED',
-                    });
-                    reply.raw.end();
-                    return;
+                if (forceRefresh) {
+                    logAction(userId, 'umkd_refresh', `UMKD stream refresh rejected: ${UMKD_SOURCE_UNAVAILABLE}`, { result: 'failed' });
                 }
-
-                const academicContextResult = await getAcademicContext(userId, false);
-                const umkdPeriod = getUmkdPeriodOverrides(academicContextResult.context);
-
-                sendEvent({ type: 'progress', status: 'Подключение...', percent: 0 });
-
-                const result = await parseUMKD(userId, password, {
-                    ...umkdPeriod,
-                    onProgress: (status, percent) => {
-                        sendEvent({ type: 'progress', status, percent });
-                    }
+                sendEvent({
+                    type: 'error',
+                    error: UMKD_SOURCE_UNAVAILABLE_MESSAGE,
+                    errorCode: UMKD_SOURCE_UNAVAILABLE,
                 });
-
-                if (!result.success || !result.data) {
-                    const mapped = mapUmkdError(result.error || 'Ошибка парсинга');
-                    sendEvent({
-                        type: 'error',
-                        error: result.error || 'Ошибка парсинга',
-                        errorCode: mapped.errorCode,
-                    });
-                    reply.raw.end();
-                    return;
-                }
-
-                // 4. Кешируем результат
-                const umkdWithCache: UMKD = {
-                    ...result.data,
-                    meta: {
-                        ...result.data.meta,
-                        parsedAt: new Date().toISOString(),
-                    },
-                };
-
-                const cacheKey = `umkd:${userId}`;
-                await setCachedData(cacheKey, umkdWithCache, CACHE_TTL_MS);
-
-                sendEvent({ type: 'complete', data: umkdWithCache });
                 reply.raw.end();
-
             } catch (error) {
                 console.error('[UMKD Stream] Error:', error);
                 const msg = error instanceof Error ? error.message : 'Unknown error';
-                const mapped = mapUmkdError(msg);
                 sendEvent({
                     type: 'error',
-                    error: mapped.errorCode === 'AUTH_RELOGIN_REQUIRED' ? 'Требуется повторная авторизация' : `Internal error: ${msg}`,
-                    errorCode: mapped.errorCode,
+                    error: `Internal error: ${msg}`,
+                    errorCode: 'UPSTREAM_UNAVAILABLE',
                 });
                 reply.raw.end();
             }

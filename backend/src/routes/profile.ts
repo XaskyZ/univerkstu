@@ -1,16 +1,18 @@
 /**
- * Profile Routes - API endpoints для профиля студента
- * Использует HTTP вместо Playwright
+ * Profile Routes - API endpoints для профиля студента.
+ *
+ * Univer отключён: маршрут больше не логинится никуда и ничего не парсит.
+ * Данные собирает services/profile.ts (сохранённый профиль + сводка Platonus).
  */
 
 import type { FastifyInstance, FastifyRequest } from 'fastify';
-import { parseFullProfile } from '../parsers/profile.js';
-import { getCachedData, setCachedData } from '../db/mongo.js';
+import { getProfile } from '../services/profile.js';
 import { logAction } from '../utils/actionLog.js';
-import { getUserPassword } from '../services/users.js';
 
-const PROFILE_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 часа
-
+/**
+ * Полный ли legacy-профиль в кэше (все разделы Univer на месте). Теперь это
+ * только диагностика: пересобрать неполный профиль всё равно негде.
+ */
 export function hasRichProfileCache(cached: any): boolean {
     return Boolean(
         cached?.profile?.questionnaire
@@ -34,80 +36,22 @@ export async function profileRoutes(fastify: FastifyInstance) {
         const refresh = (request.query as { refresh?: string }).refresh === 'true';
 
         try {
-            const cacheKey = `profile_${userId}`;
+            const data = await getProfile(userId, refresh);
+            const cached = data.source === 'cache';
 
-            // Проверяем кэш
-            if (!refresh) {
-                const cached = await getCachedData(cacheKey);
-                if (cached && hasRichProfileCache(cached)) {
-                    logAction(userId, 'profile_view', 'Opened profile from cache');
-                    return {
-                        success: true,
-                        data: cached,
-                        cached: true
-                    };
-                }
-            }
-
-            const password = await getUserPassword(userId);
-            console.log(`[Profile] Password lookup for ${userId}:`, password ? 'found' : 'missing');
-
-            if (!password) {
-                return reply.status(401).send({
-                    success: false,
-                    error: 'Требуется повторная авторизация',
-                    errorCode: 'AUTH_RELOGIN_REQUIRED'
-                });
-            }
-            console.log(`[Profile] Password ready, length: ${password.length}`);
-
-            // Парсим профиль через HTTP (без Playwright!)
-            const { profile, iup, attestation, transcript, recbook, practice, advisor, educPlan, academicOptions } = await parseFullProfile(userId, password);
-
-            const now = new Date();
-            const result = {
-                profile,
-                iup,
-                attestation,
-                transcript,
-                recbook,
-                practice,
-                advisor,
-                educPlan,
-                academicOptions,
-                meta: {
-                    parsedAt: now.toISOString(),
-                    userId
-                },
-                cachedAt: now.toISOString(),
-                expiresAt: new Date(now.getTime() + PROFILE_CACHE_TTL).toISOString()
-            };
-
-            // Сохраняем в кэш
-            await setCachedData(cacheKey, result, PROFILE_CACHE_TTL);
-            logAction(userId, 'profile_view', `Opened profile with refresh=${refresh ? 'true' : 'false'}; fetched fresh data`);
+            logAction(
+                userId,
+                'profile_view',
+                `Opened profile with refresh=${refresh ? 'true' : 'false'}; source=${data.source}; platonus=${data.platonusStatus}; legacyComplete=${hasRichProfileCache(data) ? 'yes' : 'no'}`
+            );
 
             return {
                 success: true,
-                data: result,
-                cached: false
+                data,
+                cached,
             };
         } catch (error) {
             console.error('[Profile] Error:', error);
-            const errorMessage = error instanceof Error ? error.message : 'Ошибка получения профиля';
-            
-            if (
-                errorMessage.includes('Сессия истекла') ||
-                errorMessage.includes('Ошибка авторизации') ||
-                errorMessage.includes('HTTP error: 401')
-            ) {
-                return reply.status(401).send({
-                    success: false,
-                    error: 'Требуется повторная авторизация',
-                    errorCode: 'AUTH_RELOGIN_REQUIRED'
-                });
-            }
-            
             return reply.status(500).send({
                 success: false,
                 error: 'Ошибка получения профиля'

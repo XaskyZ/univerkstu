@@ -189,6 +189,12 @@ function UMKDPageInner() {
                     router.push('/');
                     return;
                 }
+                // Источник УМКД (univer.kstu.kz) отключён навсегда — показываем
+                // текст бэкенда как есть, а не «временно недоступен».
+                if (payload?.errorCode === 'UMKD_SOURCE_UNAVAILABLE' && payload.error) {
+                    setError(payload.error);
+                    return;
+                }
                 setError(toUserErrorMessage({
                     error: payload?.error || `HTTP ${response.status}`,
                     statusCode: response.status,
@@ -296,6 +302,10 @@ function UMKDPageInner() {
                 if (payload?.errorCode === 'AUTH_RELOGIN_REQUIRED' || response.status === 401) {
                     await logout('expired');
                     router.push('/');
+                    return;
+                }
+                if (payload?.errorCode === 'UMKD_SOURCE_UNAVAILABLE' && payload.error) {
+                    setError(payload.error);
                     return;
                 }
                 setError(toUserErrorMessage({

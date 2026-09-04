@@ -283,6 +283,16 @@ export default function ProfilePage() {
     const educPlan = data?.educPlan;
     const academicOptions = data?.academicOptions;
 
+    // univer.kstu.kz отключён: бэкенд отдаёт PROFILE_SOURCE_UNAVAILABLE, когда
+    // legacy-разделов профиля нет ни в кэше, ни в Platonus.
+    const sourceUnavailableNotice = data?.errorCode === 'PROFILE_SOURCE_UNAVAILABLE'
+        ? (language === 'en'
+            ? 'The univer.kstu.kz profile source is disabled — showing Platonus data and the previously saved profile.'
+            : language === 'kz'
+                ? 'univer.kstu.kz профиль көзі өшірілген — Platonus деректері мен бұрын сақталған профиль көрсетілген.'
+                : 'Источник профиля univer.kstu.kz отключён — показаны данные Platonus и ранее сохранённый профиль.')
+        : null;
+
     // GPA: приоритет Платонус (из кэша) > аттестация > transferGPA
     const displayGpa = platonusGpa
         ?? (attestation?.currentGPA && attestation.currentGPA > 0 ? attestation.currentGPA : null)
@@ -406,6 +416,15 @@ export default function ProfilePage() {
                                 </>
                             }
                         />
+                        {sourceUnavailableNotice ? (
+                            <p
+                                className="rounded-2xl px-4 py-3 text-sm"
+                                style={{ background: 'var(--status-info-bg)', color: 'var(--status-info-color)', border: '1px solid var(--status-info-border)' }}
+                                role="status"
+                            >
+                                {sourceUnavailableNotice}
+                            </p>
+                        ) : null}
                     </>
                 ) : null}
 

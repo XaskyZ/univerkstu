@@ -12,8 +12,7 @@ import Fastify from 'fastify';
 
 vi.mock('../services/file-access.js', () => ({ canAccessFile: vi.fn() }));
 vi.mock('../services/umkd-parse-questions.js', () => ({ getOrParseExamQuestions: vi.fn() }));
-vi.mock('../parsers/umkd.js', () => ({ parseUMKD: vi.fn() }));
-vi.mock('../db/mongo.js', () => ({ getCachedData: vi.fn(), setCachedData: vi.fn() }));
+vi.mock('../db/mongo.js', () => ({ getCacheEntry: vi.fn(), setCachedData: vi.fn() }));
 vi.mock('../services/academic-context.js', () => ({ getAcademicContext: vi.fn() }));
 vi.mock('../services/users.js', () => ({ getUserPassword: vi.fn() }));
 vi.mock('../utils/actionLog.js', () => ({ logAction: vi.fn() }));

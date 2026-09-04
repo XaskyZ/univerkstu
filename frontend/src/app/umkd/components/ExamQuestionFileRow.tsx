@@ -28,7 +28,7 @@ export function ExamQuestionFileRow({ file, reviewed, onToggleReviewed }: ExamQu
 
     // Backend may pre-sign URLs as absolute or as `/api/v3/...` paths. We
     // prepend `API_BASE_URL` only for relative ones so we don't double-prefix
-    // an external link (e.g. Univer's UMKD CDN).
+    // an external link (e.g. a legacy external file host).
     const resolveUrl = (raw?: string): string => {
         if (!raw) return '';
         if (raw.startsWith('http://') || raw.startsWith('https://')) return raw;

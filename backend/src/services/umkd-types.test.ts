@@ -1,13 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
+    buildExamQuestionsBySubject,
     detectExtension,
     getCurrentSemester,
     getCurrentYear,
     guessFilename,
     looksLikeHtml,
-    parseCourseList,
     slugify,
-} from './umkd.js';
+    type UMKDCourse,
+    type UMKDFile,
+} from './umkd-types.js';
 
 describe('slugify', () => {
     it('lowercases and collapses spaces to underscores', () => {
@@ -165,43 +167,46 @@ describe('getCurrentSemester', () => {
     });
 });
 
-describe('parseCourseList', () => {
-    it('extracts courses from primary table.inner tr.link layout', () => {
-        const html = `
-            <table class="inner">
-                <tr class="link" id="c1"><td>1</td><td>Математика</td><td>обязат.</td></tr>
-                <tr class="link" id="c2"><td>2</td><td>Физика</td><td>выборная</td></tr>
-            </table>
-        `;
-        const result = parseCourseList(html);
-        expect(result).toHaveLength(2);
-        expect(result[0]).toEqual({ id: 'c1', title: 'Математика', kind: 'обязат.' });
-        expect(result[1]).toEqual({ id: 'c2', title: 'Физика', kind: 'выборная' });
+describe('buildExamQuestionsBySubject', () => {
+    const file = (over: Partial<UMKDFile>): UMKDFile => ({
+        id: 'f1',
+        name: 'questions.pdf',
+        url: '',
+        ...over,
     });
 
-    it('falls back to folder-icon detection when no .link rows', () => {
-        const html = `
-            <table class="inner">
-                <tr><td><img src="folder.png"/></td><td>Биология</td><td>факульт.</td></tr>
-            </table>
-        `;
-        const result = parseCourseList(html);
-        expect(result).toHaveLength(1);
-        expect(result[0].title).toBe('Биология');
-        expect(result[0].kind).toBe('факульт.');
-    });
+    it('groups only exam-questions files, sorted by count then name', () => {
+        const courses: UMKDCourse[] = [
+            {
+                id: 'c1',
+                name: 'Физика',
+                kind: 'обязат.',
+                files: [
+                    file({ id: '1', fileId: 'aaa', name: 'вопросы.docx', examClassification: { kind: 'exam-questions', confidence: 'strong', reason: 'title' } as any }),
+                    file({ id: '2', name: 'лекция.pdf', examClassification: { kind: 'other', confidence: 'weak', reason: '' } as any }),
+                ],
+            },
+            {
+                id: 'c2',
+                name: 'Алгебра',
+                files: [
+                    file({ id: '3', examClassification: { kind: 'exam-questions', confidence: 'medium', reason: 'a' } as any }),
+                    file({ id: '4', examClassification: { kind: 'exam-questions', confidence: 'weak', reason: 'b' } as any }),
+                ],
+            },
+            { id: 'c3', name: 'Химия', files: [file({ id: '5' })] },
+        ];
 
-    it('skips rows without title', () => {
-        const html = `
-            <table class="inner">
-                <tr class="link" id="c1"><td>1</td><td></td><td>x</td></tr>
-            </table>
-        `;
-        expect(parseCourseList(html)).toHaveLength(0);
-    });
-
-    it('returns empty array for empty/missing tables', () => {
-        expect(parseCourseList('<div>nothing</div>')).toEqual([]);
-        expect(parseCourseList('')).toEqual([]);
+        const groups = buildExamQuestionsBySubject(courses);
+        expect(groups.map((g) => g.subjectName)).toEqual(['Алгебра', 'Физика']);
+        expect(groups[0].fileCount).toBe(2);
+        expect(groups[1].files[0]).toMatchObject({
+            fileId: 'aaa',
+            extension: 'docx',
+            downloadUrl: '/api/v3/files/aaa?download=1',
+            openUrl: '/api/v3/files/aaa',
+            confidence: 'strong',
+        });
+        expect(groups[0].files[0].downloadUrl).toBeUndefined();
     });
 });

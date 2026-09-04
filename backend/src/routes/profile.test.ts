@@ -1,9 +1,97 @@
-import { describe, it, expect } from 'vitest';
-import { hasRichProfileCache } from './profile.js';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import Fastify from 'fastify';
+
+vi.mock('../services/profile.js', () => ({ getProfile: vi.fn() }));
+vi.mock('../utils/actionLog.js', () => ({ logAction: vi.fn() }));
+
+const { hasRichProfileCache, profileRoutes } = await import('./profile.js');
+const profileService = await import('../services/profile.js');
+
+const CALLER = 'student-1';
+
+async function buildApp() {
+    const app = Fastify();
+    app.decorate('authenticate', async (request: any) => {
+        request.user = { userId: CALLER };
+    });
+    await app.register(profileRoutes);
+    await app.ready();
+    return app;
+}
+
+const platonusOnlyProfile = () => ({
+    profile: null,
+    iup: null,
+    attestation: null,
+    transcript: null,
+    recbook: null,
+    practice: null,
+    advisor: null,
+    educPlan: null,
+    academicOptions: null,
+    source: 'platonus' as const,
+    platonus: { personID: '42', gpa: 3.4, overallGpa: 3.4, groupName: 'G', termGpaMap: {}, courseGpaMap: {}, semesters: [], fetchedAt: 'x' },
+    platonusStatus: 'ok' as const,
+    unavailableSections: ['profile', 'iup', 'attestation', 'transcript', 'recbook', 'practice', 'advisor', 'educPlan', 'academicOptions'] as any,
+    errorCode: 'PROFILE_SOURCE_UNAVAILABLE' as const,
+    message: 'Источник профиля univer.kstu.kz отключён.',
+    meta: { parsedAt: 'x', userId: CALLER },
+    cachedAt: 'x',
+    expiresAt: 'y',
+});
+
+describe('GET /profile — Univer отключён', () => {
+    // Маршрут больше не логинится в univer.kstu.kz и не требует пароль:
+    // всё, что есть, собирает services/profile.ts (кэш + Platonus).
+    beforeEach(() => vi.clearAllMocks());
+
+    it('отдаёт 200 с source platonus и errorCode PROFILE_SOURCE_UNAVAILABLE, когда legacy-профиля нет', async () => {
+        vi.mocked(profileService.getProfile).mockResolvedValue(platonusOnlyProfile());
+        const app = await buildApp();
+        const res = await app.inject({ method: 'GET', url: '/profile' });
+
+        expect(res.statusCode).toBe(200);
+        const body = res.json();
+        expect(body.success).toBe(true);
+        expect(body.cached).toBe(false);
+        expect(body.data.source).toBe('platonus');
+        expect(body.data.profile).toBeNull();
+        expect(body.data.errorCode).toBe('PROFILE_SOURCE_UNAVAILABLE');
+        expect(body.data.platonus.gpa).toBe(3.4);
+        expect(vi.mocked(profileService.getProfile)).toHaveBeenCalledWith(CALLER, false);
+    });
+
+    it('refresh=true прокидывается в сервис как forceRefresh', async () => {
+        vi.mocked(profileService.getProfile).mockResolvedValue({ ...platonusOnlyProfile(), source: 'cache' });
+        const app = await buildApp();
+        const res = await app.inject({ method: 'GET', url: '/profile?refresh=true' });
+
+        expect(res.statusCode).toBe(200);
+        expect(res.json().cached).toBe(true);
+        expect(vi.mocked(profileService.getProfile)).toHaveBeenCalledWith(CALLER, true);
+    });
+
+    it('исключение сервиса → 500 с фиксированным текстом', async () => {
+        vi.mocked(profileService.getProfile).mockRejectedValue(new Error('pg down'));
+        const app = await buildApp();
+        const res = await app.inject({ method: 'GET', url: '/profile' });
+
+        expect(res.statusCode).toBe(500);
+        expect(res.json()).toEqual({ success: false, error: 'Ошибка получения профиля' });
+    });
+
+    it('POST /profile/refresh редиректит на GET ?refresh=true', async () => {
+        const app = await buildApp();
+        const res = await app.inject({ method: 'POST', url: '/profile/refresh' });
+
+        expect(res.statusCode).toBe(302);
+        expect(res.headers.location).toBe('/api/v3/profile?refresh=true');
+    });
+});
 
 describe('hasRichProfileCache', () => {
     // Decides whether the cached profile blob is "complete enough" to return as-is
-    // OR whether we need a fresh fetch from KSTU. All 5 sub-objects must be present
+    // (diagnostic only now — Univer is gone, nothing can be re-fetched). All 5 sub-objects must be present
     // AND non-null:
     //   - profile.questionnaire (truthy check, not just hasOwnProperty)
     //   - transcript
@@ -11,8 +99,7 @@ describe('hasRichProfileCache', () => {
     //   - practice
     //   - advisor
     //
-    // Each is an independent fetch, so a regression that flips ANY check could send
-    // hundreds of redundant requests to KSTU on every cache hit.
+    // Lock in the contract so logs keep telling complete legacy caches from partial ones.
 
     const fullCache = () => ({
         profile: { questionnaire: { summary: {} } },

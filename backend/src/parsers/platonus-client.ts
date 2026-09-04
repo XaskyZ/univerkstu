@@ -1,6 +1,6 @@
 /**
  * HTTP client for Platonus (platonus.kstu.kz)
- * Отдельный от http-client.ts (для univer.kstu.kz)
+ * Единственный HTTP-клиент к порталу вуза (univer.kstu.kz отключён)
  */
 
 import axios, { AxiosInstance } from 'axios';

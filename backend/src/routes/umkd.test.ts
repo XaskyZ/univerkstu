@@ -1,9 +1,122 @@
-import { describe, it, expect } from 'vitest';
-import { getUmkdPeriodOverrides } from './umkd.js';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import Fastify from 'fastify';
 import type { AcademicContextResponse } from '../services/academic-context.js';
 
+vi.mock('../db/mongo.js', () => ({ getCacheEntry: vi.fn(), setCachedData: vi.fn() }));
+vi.mock('../utils/actionLog.js', () => ({ logAction: vi.fn() }));
+vi.mock('../services/file-access.js', () => ({ canAccessFile: vi.fn() }));
+vi.mock('../services/umkd-parse-questions.js', () => ({ getOrParseExamQuestions: vi.fn() }));
+
+const { getUmkdPeriodOverrides, umkdRoutes } = await import('./umkd.js');
+const mongo = await import('../db/mongo.js');
+const actionLog = await import('../utils/actionLog.js');
+
+const CALLER = 'student-1';
+
+async function buildApp() {
+    const app = Fastify();
+    app.decorate('authenticate', async (request: any) => {
+        request.user = { userId: CALLER };
+    });
+    await app.register(umkdRoutes);
+    await app.ready();
+    return app;
+}
+
+const cachedUmkd = () => ({
+    courses: [{ id: 'c1', name: 'Физика', files: [] }],
+    examQuestionsBySubject: [],
+    meta: { parsedAt: '2026-01-01T00:00:00.000Z', totalCourses: 1, totalFiles: 0, downloadedFiles: 0, deduplicatedFiles: 0, userId: CALLER },
+});
+
+const entry = (data: unknown, expiresAt: Date) => ({ key: `umkd:${CALLER}`, data, createdAt: new Date(0), expiresAt });
+const parseSse = (body: string) => body
+    .split('\n\n')
+    .filter((chunk) => chunk.startsWith('data: '))
+    .map((chunk) => JSON.parse(chunk.slice('data: '.length)));
+
+describe('umkd routes — источник univer.kstu.kz отключён', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+        vi.mocked(mongo.setCachedData).mockResolvedValue(undefined);
+    });
+
+    it('GET /umkd отдаёт сохранённый список (свежий кэш → stale=false, без продления)', async () => {
+        vi.mocked(mongo.getCacheEntry).mockResolvedValue(entry(cachedUmkd(), new Date(Date.now() + 60_000)) as any);
+        const app = await buildApp();
+        const res = await app.inject({ method: 'GET', url: '/umkd' });
+
+        expect(res.statusCode).toBe(200);
+        expect(res.json()).toMatchObject({ success: true, cached: true, stale: false });
+        expect(res.json().data.courses[0].name).toBe('Физика');
+        expect(vi.mocked(mongo.setCachedData)).not.toHaveBeenCalled();
+    });
+
+    it('GET /umkd отдаёт даже просроченный кэш и продлевает его — пересобрать негде', async () => {
+        vi.mocked(mongo.getCacheEntry).mockResolvedValue(entry(cachedUmkd(), new Date(Date.now() - 60_000)) as any);
+        const app = await buildApp();
+        const res = await app.inject({ method: 'GET', url: '/umkd' });
+
+        expect(res.statusCode).toBe(200);
+        expect(res.json().stale).toBe(true);
+        expect(vi.mocked(mongo.setCachedData)).toHaveBeenCalledWith(`umkd:${CALLER}`, expect.objectContaining({ courses: expect.any(Array) }), expect.any(Number));
+    });
+
+    it('GET /umkd без кэша → 503 UMKD_SOURCE_UNAVAILABLE с русским текстом', async () => {
+        vi.mocked(mongo.getCacheEntry).mockResolvedValue(null);
+        const app = await buildApp();
+        const res = await app.inject({ method: 'GET', url: '/umkd' });
+
+        expect(res.statusCode).toBe(503);
+        expect(res.json()).toMatchObject({ success: false, errorCode: 'UMKD_SOURCE_UNAVAILABLE' });
+        expect(res.json().error).toContain('univer.kstu.kz отключён');
+    });
+
+    it('GET /umkd?refresh=true → 503 даже при наличии кэша, кэш не читается', async () => {
+        vi.mocked(mongo.getCacheEntry).mockResolvedValue(entry(cachedUmkd(), new Date(Date.now() + 60_000)) as any);
+        const app = await buildApp();
+        const res = await app.inject({ method: 'GET', url: '/umkd?refresh=true' });
+
+        expect(res.statusCode).toBe(503);
+        expect(res.json().errorCode).toBe('UMKD_SOURCE_UNAVAILABLE');
+        expect(vi.mocked(mongo.getCacheEntry)).not.toHaveBeenCalled();
+    });
+
+    it('POST /umkd/refresh → 503 и запись в actionLog', async () => {
+        const app = await buildApp();
+        const res = await app.inject({ method: 'POST', url: '/umkd/refresh' });
+
+        expect(res.statusCode).toBe(503);
+        expect(res.json().errorCode).toBe('UMKD_SOURCE_UNAVAILABLE');
+        expect(vi.mocked(actionLog.logAction)).toHaveBeenCalledWith(CALLER, 'umkd_refresh', expect.stringContaining('UMKD_SOURCE_UNAVAILABLE'), { result: 'failed' });
+    });
+
+    it('GET /umkd/stream с кэшем → progress + complete', async () => {
+        vi.mocked(mongo.getCacheEntry).mockResolvedValue(entry(cachedUmkd(), new Date(Date.now() + 60_000)) as any);
+        const app = await buildApp();
+        const res = await app.inject({ method: 'GET', url: '/umkd/stream' });
+
+        expect(res.statusCode).toBe(200);
+        expect(res.headers['content-type']).toBe('text/event-stream');
+        const events = parseSse(res.body);
+        expect(events.map((e) => e.type)).toEqual(['progress', 'complete']);
+        expect(events[1].data.courses).toHaveLength(1);
+    });
+
+    it('GET /umkd/stream без кэша и с refresh=true → событие error UMKD_SOURCE_UNAVAILABLE', async () => {
+        vi.mocked(mongo.getCacheEntry).mockResolvedValue(null);
+        const app = await buildApp();
+
+        for (const url of ['/umkd/stream', '/umkd/stream?refresh=true']) {
+            const res = await app.inject({ method: 'GET', url });
+            const events = parseSse(res.body);
+            expect(events).toEqual([{ type: 'error', error: expect.stringContaining('отключён'), errorCode: 'UMKD_SOURCE_UNAVAILABLE' }]);
+        }
+    });
+});
+
 const ctx = (overrides: Partial<AcademicContextResponse>): AcademicContextResponse => ({
-    source: 'univer_academic_calendar',
+    source: 'platonus_calendar',
     userId: 'u1',
     formOfEducation: null,
     educationLevel: null,
