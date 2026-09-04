@@ -20,15 +20,15 @@ export async function academicRoutes(app: FastifyInstance) {
         if (!result.context) {
             const message = result.error || 'Не удалось получить академический контекст';
             const userMissing = message.includes('Пользователь не найден');
-            const univerAuthFailed = message.includes('Ошибка авторизации Univer');
+            const platonusNotConnected = result.errorCode === 'PLATONUS_NOT_CONNECTED';
 
-            if (univerAuthFailed) {
+            if (platonusNotConnected) {
                 return reply.send({
                     success: true,
                     degraded: true,
                     stale: false,
                     authRequired: true,
-                    errorCode: 'UNIVER_AUTH_REQUIRED',
+                    errorCode: 'PLATONUS_NOT_CONNECTED',
                     error: message,
                     data: null,
                 });

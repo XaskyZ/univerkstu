@@ -87,11 +87,11 @@ export interface ScheduleMeta {
     parsedAt: string;
     userId: string;
     /**
-     * Откуда спарсено расписание: 'platonus' — основной источник (v7 REST),
-     * 'univer' — фолбэк (HTML univer.kstu.kz). Опционально — старые записи
-     * в кэше этого поля не имеют (они все были univer).
+     * Откуда спарсено расписание: всегда 'platonus' (v7 REST) — univer.kstu.kz
+     * закрыт, фолбэка нет. Опционально — старые записи в кэше этого поля не
+     * имеют (они были спарсены с Univer).
      */
-    source?: 'platonus' | 'univer';
+    source?: 'platonus';
     /**
      * Информация о семестре, из которого спарсено расписание (новая разметка
      * myschedule: /student/myschedule/{год}/{семестр}). Опционально — старые

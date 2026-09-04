@@ -287,7 +287,7 @@ export interface AcademicContextPeriod {
 }
 
 export interface AcademicContextSemester {
-    semesterNumber: number;
+    semesterNumber: number | null;
     title: string;
     start: string | null;
     end: string | null;
@@ -296,7 +296,7 @@ export interface AcademicContextSemester {
 }
 
 export interface AcademicContext {
-    source: 'univer_academic_calendar';
+    source: 'platonus_calendar';
     userId: string;
     formOfEducation: string | null;
     educationLevel: string | null;

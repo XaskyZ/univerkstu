@@ -196,7 +196,7 @@ export interface StudentEducPlanCycleCounts {
 }
 
 export interface StudentEducPlanSemesterOverview {
-    semesterNumber: number;
+    semesterNumber: number | null;
     totalSubjects: number;
     totalCredits: number;
     controlTypes: string[];

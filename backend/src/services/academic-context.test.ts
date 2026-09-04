@@ -8,12 +8,21 @@ import {
     pickActivePeriod,
     pickCurrentSemester,
     resolveActivePeriod,
+    platonusSemesterWindow,
+    platonusSemesterTitle,
+    toCalendarEventDate,
+    classifyCalendarEvent,
+    calendarEventToPeriod,
+    buildPlatonusAcademicCalendar,
+    buildAcademicContext,
 } from './academic-context.js';
+import { formatDate, parseDate } from './academic-calendar-types.js';
 import type {
     AcademicCalendarPeriod,
     AcademicCalendarSemester,
     ParsedAcademicCalendar,
-} from '../parsers/academic-calendar.js';
+} from './academic-calendar-types.js';
+import type { PlatonusCalendarEvent } from '../parsers/platonus-client.js';
 
 describe('startOfToday', () => {
     it('zeroes out hours/minutes/seconds/ms', () => {
@@ -192,7 +201,7 @@ describe('buildWeekLabel', () => {
     });
 });
 
-// Note: the parser stores dates as DD.MM.YYYY strings (see parsers/academic-calendar.ts:parseDate).
+// Note: dates are DD.MM.YYYY strings (see services/academic-calendar-types.ts:parseDate).
 // toDate() applied internally by pickActivePeriod/pickCurrentSemester only parses that format.
 function period(overrides: Partial<AcademicCalendarPeriod>): AcademicCalendarPeriod {
     return {
@@ -448,5 +457,211 @@ describe('resolveActivePeriod', () => {
         expect(result.semesterIsCurrent).toBe(true);
         expect(result.semesterWeek).not.toBeNull();
         expect(result.activePeriodKind).toBeNull();
+    });
+});
+
+describe('formatDate / parseDate round-trip', () => {
+    it('formats a local date as DD.MM.YYYY and parses it back', () => {
+        const date = new Date(2026, 8, 1); // 1 Sep 2026
+        expect(formatDate(date)).toBe('01.09.2026');
+        expect(parseDate('01.09.2026')?.getTime()).toBe(date.getTime());
+    });
+});
+
+describe('platonusSemesterWindow', () => {
+    // The window must start where parsers/platonus-schedule.ts starts counting
+    // weeks (1 Sep / 20 Jan) — otherwise week parity in the context would
+    // disagree with the parity the schedule grid was merged with.
+    it('autumn: 1 Sep of the academic year → day before the spring start (19 Jan)', () => {
+        const { start, end } = platonusSemesterWindow(2026, 1);
+        expect(formatDate(start)).toBe('01.09.2026');
+        expect(formatDate(end)).toBe('19.01.2027');
+    });
+
+    it('spring: 20 Jan → 30 Jun of the next calendar year', () => {
+        const { start, end } = platonusSemesterWindow(2026, 2);
+        expect(formatDate(start)).toBe('20.01.2027');
+        expect(formatDate(end)).toBe('30.06.2027');
+    });
+
+    it('titles carry the academic year and the term name', () => {
+        expect(platonusSemesterTitle(2026, 1)).toBe('2026/2027 — Осенний семестр');
+        expect(platonusSemesterTitle(2026, 2)).toBe('2026/2027 — Весенний семестр');
+    });
+});
+
+describe('toCalendarEventDate', () => {
+    const ms = new Date(2026, 11, 15, 9, 0).getTime();
+
+    it('accepts ms-since-epoch as number or numeric string (Platonus format)', () => {
+        expect(toCalendarEventDate(ms)?.getTime()).toBe(ms);
+        expect(toCalendarEventDate(String(ms))?.getTime()).toBe(ms);
+    });
+
+    it('returns null for empty / garbage input', () => {
+        expect(toCalendarEventDate(undefined)).toBeNull();
+        expect(toCalendarEventDate('')).toBeNull();
+        expect(toCalendarEventDate('not-a-date')).toBeNull();
+    });
+});
+
+describe('classifyCalendarEvent', () => {
+    it('classifies by Russian title first (shared dictionary)', () => {
+        expect(classifyCalendarEvent('other', 'Экзаменационная сессия (100)')).toBe('exams');
+        expect(classifyCalendarEvent(undefined, 'Рубежный контроль 1 (100)')).toBe('midterm_1');
+        expect(classifyCalendarEvent(undefined, 'Зимние каникулы')).toBe('vacation');
+    });
+
+    it('falls back to the Platonus event type', () => {
+        expect(classifyCalendarEvent('exam', 'Экзамен MATH101')).toBe('exams');
+        expect(classifyCalendarEvent('EXAM', 'MATH101')).toBe('exams');
+        expect(classifyCalendarEvent('holiday', 'Наурыз')).toBe('vacation');
+        expect(classifyCalendarEvent('lecture', 'Лекция')).toBe('other');
+        expect(classifyCalendarEvent(undefined, 'Что-то')).toBe('other');
+    });
+});
+
+describe('calendarEventToPeriod', () => {
+    const startMs = new Date(2026, 11, 15, 9, 0).getTime();
+
+    it('maps a Platonus exam event to an exams period with DD.MM.YYYY dates', () => {
+        const period = calendarEventToPeriod({
+            type: 'exam',
+            title: '  Экзамен   MATH101 ',
+            start: startMs,
+            end: startMs + 2 * 60 * 60 * 1000,
+        });
+        expect(period).toEqual({
+            label: 'Экзамен MATH101',
+            kind: 'exams',
+            weeks: null,
+            start: '15.12.2026',
+            end: '15.12.2026',
+            segmentLabel: 'Platonus: exam',
+        });
+    });
+
+    it('uses start as end when end is missing or precedes start', () => {
+        expect(calendarEventToPeriod({ type: 'exam', title: 'X', start: startMs })?.end).toBe('15.12.2026');
+        expect(calendarEventToPeriod({ type: 'exam', title: 'X', start: startMs, end: startMs - 86400000 })?.end)
+            .toBe('15.12.2026');
+    });
+
+    it('drops events without a parseable start', () => {
+        expect(calendarEventToPeriod({ type: 'exam', title: 'X' })).toBeNull();
+        expect(calendarEventToPeriod({ type: 'exam', title: 'X', start: 'nope' })).toBeNull();
+    });
+
+    it('falls back to description, then to a generic label', () => {
+        expect(calendarEventToPeriod({ start: startMs, description: 'Описание' })?.label).toBe('Описание');
+        expect(calendarEventToPeriod({ start: startMs })?.label).toBe('Событие Platonus');
+        expect(calendarEventToPeriod({ start: startMs })?.segmentLabel).toBe('Platonus');
+    });
+});
+
+describe('buildPlatonusAcademicCalendar', () => {
+    const event = (overrides: Partial<PlatonusCalendarEvent>): PlatonusCalendarEvent => ({
+        type: 'exam',
+        title: 'Экзамен',
+        start: new Date(2026, 11, 15).getTime(),
+        ...overrides,
+    });
+
+    it('produces both semesters of the current academic year with computed windows', () => {
+        const parsed = buildPlatonusAcademicCalendar({ year: 2026, semester: 1 }, []);
+        expect(parsed.semesters).toHaveLength(2);
+        expect(parsed.semesters[0]).toMatchObject({
+            semesterNumber: null,
+            academicYear: 2026,
+            term: 1,
+            title: '2026/2027 — Осенний семестр',
+            start: '01.09.2026',
+            end: '19.01.2027',
+            totalWeeks: null,
+            periods: [],
+        });
+        expect(parsed.semesters[1]).toMatchObject({
+            term: 2,
+            start: '20.01.2027',
+            end: '30.06.2027',
+        });
+    });
+
+    it('leaves Univer-only profile fields null (Platonus does not expose them)', () => {
+        const parsed = buildPlatonusAcademicCalendar({ year: 2026, semester: 1 }, null);
+        expect(parsed.formOfEducation).toBeNull();
+        expect(parsed.educationLevel).toBeNull();
+        expect(parsed.specialty).toBeNull();
+        expect(parsed.totalSemesters).toBeNull();
+        expect(parsed.admissionYear).toBeNull();
+    });
+
+    it('assigns events to the semester whose window contains their start, sorted by date', () => {
+        const parsed = buildPlatonusAcademicCalendar({ year: 2026, semester: 1 }, [
+            event({ title: 'Экзамен B', start: new Date(2026, 11, 20).getTime() }),
+            event({ title: 'Экзамен A', start: new Date(2026, 11, 15).getTime() }),
+            event({ title: 'Экзамен весна', start: new Date(2027, 4, 20).getTime() }),
+            event({ title: 'Экзамен январь', start: new Date(2027, 0, 10).getTime() }), // still autumn window
+        ]);
+        expect(parsed.semesters[0].periods.map((p) => p.label)).toEqual(['Экзамен A', 'Экзамен B', 'Экзамен январь']);
+        expect(parsed.semesters[1].periods.map((p) => p.label)).toEqual(['Экзамен весна']);
+    });
+
+    it('drops events outside both semester windows and events without a start', () => {
+        const parsed = buildPlatonusAcademicCalendar({ year: 2026, semester: 1 }, [
+            event({ title: 'Лето', start: new Date(2027, 6, 15).getTime() }),
+            event({ title: 'Прошлый год', start: new Date(2025, 11, 15).getTime() }),
+            event({ title: 'Без даты', start: undefined }),
+        ]);
+        expect(parsed.semesters[0].periods).toEqual([]);
+        expect(parsed.semesters[1].periods).toEqual([]);
+    });
+
+    it('tolerates a null events payload (calendar endpoint unavailable)', () => {
+        const parsed = buildPlatonusAcademicCalendar({ year: 2026, semester: 2 }, null);
+        expect(parsed.semesters.every((s) => s.periods.length === 0)).toBe(true);
+    });
+});
+
+describe('buildAcademicContext (Platonus)', () => {
+    it('reports platonus_calendar as the source and computes week/parity inside the semester', () => {
+        const parsed = buildPlatonusAcademicCalendar({ year: 2026, semester: 1 }, []);
+        // Mon 14 Sep 2026: weeks are Monday-anchored from mondayOf(1 Sep) = 31 Aug → week 3.
+        const context = buildAcademicContext('u1', parsed, new Date(2026, 8, 14, 12, 0));
+        expect(context.source).toBe('platonus_calendar');
+        expect(context.userId).toBe('u1');
+        expect(context.currentSemesterNumber).toBeNull();
+        expect(context.currentSemesterLabel).toBe('2026/2027 — Осенний семестр');
+        expect(context.semesterStart).toBe('01.09.2026');
+        expect(context.semesterEnd).toBe('19.01.2027');
+        expect(context.semesterWeek).toBe(3);
+        expect(context.weekParity).toBe('num');
+        expect(context.weekLabel).toBe('3-я неделя');
+        // No umbrella "semester" period is emitted: gaps between events stay null
+        // so the UI does not render a literal "Период" label.
+        expect(context.activePeriodKind).toBeNull();
+        expect(context.activePeriodLabel).toBeNull();
+        expect(context.periods).toEqual([]);
+    });
+
+    it('surfaces a Platonus exam event as the active period on its day', () => {
+        const examDay = new Date(2026, 11, 15, 9, 0);
+        const parsed = buildPlatonusAcademicCalendar({ year: 2026, semester: 1 }, [
+            { type: 'exam', title: 'Экзамен MATH101', start: examDay.getTime() },
+        ]);
+        const context = buildAcademicContext('u1', parsed, new Date(2026, 11, 15, 14, 0));
+        expect(context.activePeriodKind).toBe('exams');
+        expect(context.activePeriodLabel).toBe('Экзамен MATH101');
+        expect(context.periods).toHaveLength(1);
+    });
+
+    it('reports vacation with no week number during the summer gap', () => {
+        const parsed = buildPlatonusAcademicCalendar({ year: 2026, semester: 1 }, []);
+        const context = buildAcademicContext('u1', parsed, new Date(2026, 6, 20, 12, 0)); // 20 Jul 2026
+        expect(context.activePeriodKind).toBe('vacation');
+        expect(context.semesterWeek).toBeNull();
+        expect(context.weekParity).toBeNull();
+        // pickCurrentSemester falls back to the nearest future semester (autumn).
+        expect(context.currentSemesterLabel).toBe('2026/2027 — Осенний семестр');
     });
 });

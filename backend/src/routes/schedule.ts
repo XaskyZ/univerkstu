@@ -35,7 +35,10 @@ interface ScheduleQuery {
 }
 
 export async function scheduleRoutes(app: FastifyInstance) {
-    const mapScheduleError = (error: string) => {
+    const mapScheduleError = (error: string, errorCode?: string) => {
+        if (errorCode === 'PLATONUS_NOT_CONNECTED') {
+            return { status: 401, errorCode: 'AUTH_RELOGIN_REQUIRED' };
+        }
         if (error.includes('Пользователь не найден') || error.includes('Требуется повторная авторизация')) {
             return { status: 401, errorCode: 'AUTH_RELOGIN_REQUIRED' };
         }
@@ -66,7 +69,7 @@ export async function scheduleRoutes(app: FastifyInstance) {
             const result = await getSchedule(userId, forceRefresh);
 
             if (result.error) {
-                const mapped = mapScheduleError(result.error);
+                const mapped = mapScheduleError(result.error, result.errorCode);
                 return reply.status(mapped.status).send({
                     success: false,
                     error: result.error,
@@ -115,7 +118,7 @@ export async function scheduleRoutes(app: FastifyInstance) {
             const result = await getSchedule(userId, true);
 
             if (result.error) {
-                const mapped = mapScheduleError(result.error);
+                const mapped = mapScheduleError(result.error, result.errorCode);
                 return reply.status(mapped.status).send({
                     success: false,
                     error: result.error,

@@ -96,16 +96,17 @@ describe('GET /academic/context', () => {
         expect(res.json().stale).toBe(false);
     });
 
-    it('returns 200 with degraded payload on UNIVER_AUTH_REQUIRED', async () => {
+    it('returns 200 with degraded payload on PLATONUS_NOT_CONNECTED', async () => {
         vi.mocked(academicContext.getAcademicContext).mockResolvedValueOnce({
             context: null,
-            error: 'Ошибка авторизации Univer: token expired',
+            error: 'Platonus не подключён. Необходимо авторизоваться.',
+            errorCode: 'PLATONUS_NOT_CONNECTED',
         } as any);
 
         const app = await buildApp('bob');
         const res = await app.inject({ method: 'GET', url: '/academic/context' });
         // Critical: this case must NOT 502 - frontend treats 502 as a hard
-        // failure, but UNIVER auth-required is a soft state that should
+        // failure, but Platonus-not-connected is a soft state that should
         // surface as data: null + degraded so the UI can prompt re-login.
         expect(res.statusCode).toBe(200);
         expect(res.json()).toEqual({
@@ -113,8 +114,8 @@ describe('GET /academic/context', () => {
             degraded: true,
             stale: false,
             authRequired: true,
-            errorCode: 'UNIVER_AUTH_REQUIRED',
-            error: 'Ошибка авторизации Univer: token expired',
+            errorCode: 'PLATONUS_NOT_CONNECTED',
+            error: 'Platonus не подключён. Необходимо авторизоваться.',
             data: null,
         });
     });

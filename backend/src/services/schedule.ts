@@ -5,10 +5,8 @@
 import type { PoolClient } from 'pg';
 import { withSupabasePostgres } from '../db/postgres.js';
 import { Schedule, CACHE_TTL, ParseResult } from '../types/index.js';
-import { parseSchedule } from '../parsers/schedule.js';
 import { fetchAndParsePlatonusSchedule } from '../parsers/platonus-schedule.js';
 import { getActivePlatonusSession, forceRefreshSession } from './platonus.js';
-import { getUserPassword } from './users.js';
 import { ensureTeacherDirectoryEntry } from './teacher-ratings.js';
 import { findTeacherInDb } from '../utils/teacherMatcher.js';
 
@@ -82,64 +80,57 @@ export async function getAnySchedule(userId: string): Promise<Schedule | null> {
     });
 }
 
+export type ScheduleFetchErrorCode = 'PLATONUS_NOT_CONNECTED' | 'PLATONUS_UPSTREAM_ERROR';
+
+type FreshScheduleResult = ParseResult<Omit<Schedule, '_id' | 'userId' | 'cachedAt' | 'expiresAt'>> & {
+    errorCode?: ScheduleFetchErrorCode;
+};
+
 /**
- * Свежее расписание из внешних источников.
+ * Свежее расписание из Platonus v7 — единственного источника.
  *
- * Порядок источников (осень 2026: КГТУ перенёс расписание в Platonus,
- * univer.kstu.kz его больше не публикует):
- *   1. Platonus v7 (сессия из app_platonus_sessions — тот же путь, что
- *      у оценок/экзаменов). При 401 пробуем один force-refresh сессии.
- *   2. Фолбэк — старый Univer-парсер (HTML myschedule), поведение прежнее:
- *      если у пользователя нет univer-пароля, возвращаем прежнюю ошибку.
+ * univer.kstu.kz закрыт навсегда, Univer-фолбэка больше нет: без активной
+ * сессии Platonus (app_platonus_sessions) возвращаем ошибку
+ * PLATONUS_NOT_CONNECTED, при сбое Platonus — PLATONUS_UPSTREAM_ERROR с
+ * причиной из парсера. При протухшей сессии (401) — один force-refresh
+ * (тот же паттерн, что у platonus-grades).
  */
-async function fetchFreshSchedule(
-    userId: string
-): Promise<ParseResult<Omit<Schedule, '_id' | 'userId' | 'cachedAt' | 'expiresAt'>>> {
-    // 1) Platonus — основной источник
-    let platonusError: string | undefined;
+async function fetchFreshSchedule(userId: string): Promise<FreshScheduleResult> {
     try {
         const session = await getActivePlatonusSession(userId);
-        if (session) {
-            let result = await fetchAndParsePlatonusSchedule(session);
-
-            // Сессия могла протухнуть раньше нашего TTL — один retry со свежим логином
-            // (тот же паттерн, что у platonus-grades).
-            if (!result.success && result.error?.includes('авторизация')) {
-                console.log(`[Schedule Service] Platonus session stale for ${userId}, force-refreshing...`);
-                const freshSession = await forceRefreshSession(userId);
-                if (freshSession) {
-                    result = await fetchAndParsePlatonusSchedule(freshSession);
-                }
-            }
-
-            if (result.success && result.data) {
-                console.log(`[Schedule Service] Schedule for ${userId} fetched from Platonus`);
-                return result;
-            }
-            platonusError = result.error;
-            console.warn(
-                `[Schedule Service] Platonus schedule unavailable for ${userId} (${result.error}); ` +
-                `falling back to Univer`
-            );
-        } else {
-            console.log(`[Schedule Service] No Platonus session for ${userId}, using Univer source`);
+        if (!session) {
+            console.log(`[Schedule Service] No Platonus session for ${userId}`);
+            return {
+                success: false,
+                error: 'Platonus не подключён. Необходимо авторизоваться.',
+                errorCode: 'PLATONUS_NOT_CONNECTED',
+            };
         }
+
+        let result = await fetchAndParsePlatonusSchedule(session);
+
+        // Сессия могла протухнуть раньше нашего TTL — один retry со свежим логином.
+        if (!result.success && result.error?.includes('авторизация')) {
+            console.log(`[Schedule Service] Platonus session stale for ${userId}, force-refreshing...`);
+            const freshSession = await forceRefreshSession(userId);
+            if (freshSession) {
+                result = await fetchAndParsePlatonusSchedule(freshSession);
+            }
+        }
+
+        if (result.success && result.data) {
+            console.log(`[Schedule Service] Schedule for ${userId} fetched from Platonus`);
+            return result;
+        }
+
+        const reason = result.error || 'Ошибка получения расписания из Platonus';
+        console.warn(`[Schedule Service] Platonus schedule unavailable for ${userId}: ${reason}`);
+        return { success: false, error: reason, errorCode: 'PLATONUS_UPSTREAM_ERROR' };
     } catch (error) {
-        platonusError = error instanceof Error ? error.message : String(error);
+        const reason = error instanceof Error ? error.message : String(error);
         console.warn(`[Schedule Service] Platonus schedule path threw for ${userId}:`, error);
+        return { success: false, error: reason, errorCode: 'PLATONUS_UPSTREAM_ERROR' };
     }
-
-    // 2) Фолбэк — Univer (старый путь, сохраняем прежнее поведение)
-    const password = await getUserPassword(userId);
-    if (!password) {
-        return { success: false, error: platonusError || 'Пользователь не найден' };
-    }
-
-    const result = await parseSchedule(userId, password);
-    if (result.success && result.data) {
-        result.data.meta.source = 'univer';
-    }
-    return result;
 }
 
 /**
@@ -246,7 +237,13 @@ async function seedTeachersFromSchedule(schedule: Omit<Schedule, '_id'>): Promis
 export async function getSchedule(
     userId: string,
     forceRefresh: boolean = false
-): Promise<{ schedule: Schedule | null; cached: boolean; stale?: boolean; error?: string }> {
+): Promise<{
+    schedule: Schedule | null;
+    cached: boolean;
+    stale?: boolean;
+    error?: string;
+    errorCode?: ScheduleFetchErrorCode;
+}> {
 
     // Проверяем свежий кэш
     if (!forceRefresh) {
@@ -267,12 +264,12 @@ export async function getSchedule(
         }
     }
 
-    // Нет кеша вообще — парсим синхронно (Platonus → фолбэк Univer)
+    // Нет кеша вообще — забираем синхронно из Platonus
     console.log(`[Schedule Service] Fetching fresh schedule for ${userId}`);
     const result = await fetchFreshSchedule(userId);
 
     if (!result.success || !result.data) {
-        return { schedule: null, cached: false, error: result.error };
+        return { schedule: null, cached: false, error: result.error, errorCode: result.errorCode };
     }
 
     // Сохраняем в кэш

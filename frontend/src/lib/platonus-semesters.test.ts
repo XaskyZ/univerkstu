@@ -31,7 +31,7 @@ class MemoryStorage {
 
 function makeContext(overrides: Partial<AcademicContext>): AcademicContext {
     return {
-        source: 'univer_academic_calendar',
+        source: 'platonus_calendar',
         userId: 'test-user',
         formOfEducation: null,
         educationLevel: null,
