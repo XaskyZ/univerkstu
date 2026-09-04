@@ -51,7 +51,7 @@ interface ChallengeStatusQuery {
 }
 
 interface ApproverBody {
-    challengeId: string;
+    challengeId?: string | null;
     approveSecret: string;
 }
 
@@ -72,11 +72,13 @@ const challengeStatusQuerySchema = {
     },
 } as const;
 
+// challengeId необязателен: при ручном вводе кода (без ссылки из QR/push)
+// challenge находится по одному approveSecret.
 const approverBodySchema = {
     type: 'object',
-    required: ['challengeId', 'approveSecret'],
+    required: ['approveSecret'],
     properties: {
-        challengeId: { type: 'string', minLength: 1, maxLength: MAX_CHALLENGE_ID_LENGTH },
+        challengeId: { type: ['string', 'null'], maxLength: MAX_CHALLENGE_ID_LENGTH },
         approveSecret: { type: 'string', minLength: 1, maxLength: MAX_APPROVE_SECRET_LENGTH },
     },
 } as const;
@@ -159,9 +161,9 @@ export async function authChallengeRoutes(app: FastifyInstance) {
             return null;
         }
 
-        const challengeId = request.body.challengeId.trim();
+        const challengeId = (request.body.challengeId ?? '').trim();
         const approveSecret = normalizeApproveSecret(request.body.approveSecret);
-        if (!challengeId || !isValidApproveSecret(approveSecret)) {
+        if (!isValidApproveSecret(approveSecret)) {
             reply.status(404).send(NOT_FOUND_RESPONSE);
             return null;
         }

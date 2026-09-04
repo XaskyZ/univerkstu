@@ -273,9 +273,30 @@ export async function findLoginChallengeByPollSecret(challengeId: string, pollSe
     return findBySecret('findLoginChallengeByPollSecret', challengeId, pollSecret, 'poll_secret_hash');
 }
 
-/** Для inspect/approve/deny с авторизованного устройства. Секрет должен быть уже нормализован. */
+/**
+ * Для inspect/approve/deny с авторизованного устройства. Секрет должен быть уже
+ * нормализован. Если challengeId пустой (пользователь ввёл ручной код без
+ * ссылки), ищем по хэшу секрета среди ещё не истёкших pending-строк.
+ */
 export async function findLoginChallengeByApproveSecret(challengeId: string, approveSecret: string): Promise<LoginChallenge | null> {
-    return findBySecret('findLoginChallengeByApproveSecret', challengeId, approveSecret, 'approve_secret_hash');
+    if (challengeId) {
+        return findBySecret('findLoginChallengeByApproveSecret', challengeId, approveSecret, 'approve_secret_hash');
+    }
+    const found = await requireLoginChallengesPostgres('findLoginChallengeByManualCode', async (client): Promise<{ challenge: LoginChallenge | null }> => {
+        const result = await client.query<LoginChallengeRow>(
+            `
+                select * from app_login_challenges
+                where approve_secret_hash = $1 and status = 'pending' and expires_at > $2
+                order by created_at desc
+                limit 1
+            `,
+            [hashSecret(approveSecret), new Date()]
+        );
+        const row = result.rows[0];
+        if (!row || !secretMatchesHash(approveSecret, row.approve_secret_hash)) return { challenge: null };
+        return { challenge: rowToChallenge(row) };
+    });
+    return found.challenge;
 }
 
 /**

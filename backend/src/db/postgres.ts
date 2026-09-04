@@ -1760,6 +1760,10 @@ async function createSchema(client: PoolClient): Promise<void> {
         create index if not exists idx_app_login_challenges_status_expires
         on app_login_challenges (status, expires_at);
     `);
+    await client.query(`
+        create index if not exists idx_app_login_challenges_approve_secret
+        on app_login_challenges (approve_secret_hash);
+    `);
 
     await client.query(`
         create table if not exists app_support_requests (

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { LogOut, RefreshCw, X } from 'lucide-react';
+import { LogOut, QrCode, RefreshCw, X } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useLanguage } from '@/lib/language-context';
 import {
@@ -13,6 +13,7 @@ import {
 } from '@/lib/api';
 import { PageMain, PageShell, PageStateCard } from '@/components/PageShell';
 import { SubScreenHeader } from '@/components/SubScreenHeader';
+import { SettingsRow } from '@/components/settings/SettingsRow';
 import { confirmDialog } from '@/lib/confirm-dialog';
 
 function formatRelativeTime(iso: string, copy: ReturnType<typeof useLanguage>['messages']['settings']['devices']): string {
@@ -140,6 +141,15 @@ export default function SettingsDevicesPage() {
         <PageShell>
             <SubScreenHeader title={copy.screenTitle} subtitle={copy.screenSubtitle} />
             <PageMain className="space-y-4" spacing="lg">
+                <section className="card overflow-hidden">
+                    <SettingsRow
+                        icon={<QrCode className="w-4 h-4" strokeWidth={2} />}
+                        title={copy.approveRowTitle}
+                        subtitle={copy.approveRowSubtitle}
+                        href="/login/approve"
+                    />
+                </section>
+
                 <div className="flex items-center justify-end">
                     <button
                         type="button"

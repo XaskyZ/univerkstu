@@ -1,19 +1,43 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { login as apiLogin, curatorLogin as apiCuratorLogin, logout as apiLogout, verifyToken, isAuthenticated, getUserId } from '@/lib/api';
+import {
+    login as apiLogin,
+    register as apiRegister,
+    curatorLogin as apiCuratorLogin,
+    logout as apiLogout,
+    verifyToken,
+    isAuthenticated,
+    getUserId,
+} from '@/lib/api';
 import { hydrateStartupBootstrap } from '@/lib/startup-bootstrap';
 import { useLanguage } from '@/lib/language-context';
 import { notifySessionExpired } from '@/lib/session-expired';
 
 const IS_DEV = process.env.NODE_ENV !== 'production';
 
+export interface AuthActionResult {
+    success: boolean;
+    error?: string;
+    /** Backend error code (e.g. `AUTH_NOT_REGISTERED`, `AUTH_ALREADY_REGISTERED`) so screens can branch on it. */
+    errorCode?: string;
+    referralStatus?: string;
+}
+
 interface AuthContextType {
     isAuth: boolean;
     userId: string | null;
     loading: boolean;
-    login: (username: string, password: string, referralCode?: string) => Promise<{ success: boolean; error?: string; referralStatus?: string }>;
+    login: (username: string, password: string, referralCode?: string) => Promise<AuthActionResult>;
+    /** Create the app account for an existing Platonus login (first sign in). */
+    register: (login: string, password: string, referralCode?: string) => Promise<AuthActionResult>;
     loginCurator: (userId: string, password: string) => Promise<{ success: boolean; error?: string }>;
+    /**
+     * Finish a login that was completed outside the password form (QR / push
+     * challenge): the token is already stored by the API layer, this only
+     * updates context state and runs the same startup bootstrap as `login`.
+     */
+    completeExternalLogin: (userId: string) => Promise<void>;
     /**
      * Sign the user out. Pass `'expired'` for forced logouts after a 401 so the
      * user sees a "session expired" toast; the default `'manual'` is silent.
@@ -96,28 +120,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
     }, []);
 
-    const login = async (username: string, password: string, referralCode?: string) => {
+    const finishSignIn = async (nextUserId: string, source: string) => {
+        setIsAuth(true);
+        setUserId(nextUserId);
+        const bootstrap = await hydrateStartupBootstrap(nextUserId, { force: true }).catch((error) => {
+            if (IS_DEV) {
+                console.warn(`[Auth] Startup bootstrap failed after ${source}`, error);
+            }
+            return { success: false as const };
+        });
+        if (!bootstrap.success && IS_DEV) {
+            console.warn(`[Auth] ${source} succeeded, but startup bootstrap was not hydrated.`);
+        }
+    };
+
+    const login = async (username: string, password: string, referralCode?: string): Promise<AuthActionResult> => {
         setLoading(true);
         const result = await apiLogin(username, password, referralCode);
 
         if (result.success && result.user) {
-            setIsAuth(true);
-            setUserId(result.user.userId);
-            const bootstrap = await hydrateStartupBootstrap(result.user.userId, { force: true }).catch((error) => {
-                if (IS_DEV) {
-                    console.warn('[Auth] Startup bootstrap failed after login', error);
-                }
-                return { success: false as const };
-            });
-            if (!bootstrap.success && IS_DEV) {
-                console.warn('[Auth] Login succeeded, but startup bootstrap was not hydrated.');
-            }
+            await finishSignIn(result.user.userId, 'login');
             setLoading(false);
             return { success: true, referralStatus: result.referral?.status };
         }
 
         setLoading(false);
-        return { success: false, error: result.error, referralStatus: result.referral?.status };
+        return { success: false, error: result.error, errorCode: result.errorCode, referralStatus: result.referral?.status };
+    };
+
+    const register = async (login: string, password: string, referralCode?: string): Promise<AuthActionResult> => {
+        setLoading(true);
+        const result = await apiRegister(login, password, referralCode);
+
+        if (result.success && result.user) {
+            await finishSignIn(result.user.userId, 'register');
+            setLoading(false);
+            return { success: true, referralStatus: result.referral?.status };
+        }
+
+        setLoading(false);
+        return { success: false, error: result.error, errorCode: result.errorCode, referralStatus: result.referral?.status };
+    };
+
+    const completeExternalLogin = async (nextUserId: string) => {
+        setLoading(true);
+        await finishSignIn(nextUserId, 'challenge login');
+        setLoading(false);
     };
 
     const loginCurator = async (userId: string, password: string) => {
@@ -146,7 +194,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     return (
-        <AuthContext.Provider value={{ isAuth, userId, loading, login, loginCurator, logout }}>
+        <AuthContext.Provider value={{ isAuth, userId, loading, login, register, loginCurator, completeExternalLogin, logout }}>
             {children}
         </AuthContext.Provider>
     );

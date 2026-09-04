@@ -17,8 +17,28 @@ import {
 export { getUserId, isAuthenticated, setToken, removeToken } from './api/core';
 export type { AppLanguage } from './api/core';
 
-export { login, curatorLogin, logout, verifyToken } from './api/auth';
-export type { LoginResponse } from './api/auth';
+export {
+    login,
+    register,
+    curatorLogin,
+    logout,
+    verifyToken,
+    createLoginChallenge,
+    createPushLoginChallenge,
+    pollLoginChallenge,
+    inspectLoginChallenge,
+    approveLoginChallenge,
+    denyLoginChallenge,
+    AUTH_ERROR_CODES,
+} from './api/auth';
+export type {
+    LoginResponse,
+    LoginChallenge,
+    LoginChallengeKind,
+    LoginChallengeInfo,
+    LoginChallengePollResult,
+    PushLoginChallenge,
+} from './api/auth';
 
 export {
     checkAdminSession,

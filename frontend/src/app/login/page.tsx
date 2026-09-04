@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { useLanguage } from '@/lib/language-context';
+import { resolvePostLoginPath } from '@/lib/login-challenge';
 import LoginForm from '@/components/LoginForm';
 import Link from 'next/link';
 
@@ -11,12 +12,15 @@ export default function LoginPage() {
     const { isAuth, loading } = useAuth();
     const { messages } = useLanguage();
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const nextParam = searchParams.get('next');
 
     useEffect(() => {
         if (!loading && isAuth) {
-            router.push('/schedule');
+            // `next` is only honored for same-origin relative paths (see sanitizeNextPath).
+            router.push(resolvePostLoginPath(nextParam));
         }
-    }, [isAuth, loading, router]);
+    }, [isAuth, loading, nextParam, router]);
 
     if (loading) {
         return (

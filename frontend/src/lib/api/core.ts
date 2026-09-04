@@ -148,7 +148,7 @@ export async function fetchWithAuth<T>(
             setToken(renewedToken);
         }
 
-        let data: { error?: string; message?: string; errorCode?: string } | null = null;
+        let data: { error?: string; message?: string; errorCode?: string; data?: T } | null = null;
         try {
             data = await response.json();
         } catch {
@@ -166,6 +166,8 @@ export async function fetchWithAuth<T>(
                 error: data?.error || data?.message || text.requestError,
                 errorCode: data?.errorCode,
                 statusCode: response.status,
+                // Some 4xx responses carry context (e.g. 409 LOGIN_CHALLENGE_NOT_PENDING → { status }).
+                ...(data?.data !== undefined ? { data: data.data } : {}),
             };
         }
 

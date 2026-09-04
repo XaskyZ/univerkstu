@@ -84,6 +84,14 @@ const fakeClient = {
             return { rows: row ? [{ ...row }] : [], rowCount: row ? 1 : 0 };
         }
 
+        if (text.startsWith('select * from app_login_challenges where approve_secret_hash')) {
+            const [hash, now] = params as [string, Date];
+            const row = [...store]
+                .reverse()
+                .find((r) => r.approve_secret_hash === hash && r.status === 'pending' && new Date(r.expires_at).getTime() > now.getTime());
+            return { rows: row ? [{ ...row }] : [], rowCount: row ? 1 : 0 };
+        }
+
         if (text.startsWith("update app_login_challenges set status = 'expired'")) {
             const [id] = params as [string];
             const row = store.find((r) => r.challenge_id === id && r.status === 'pending');
@@ -229,7 +237,7 @@ async function approverCall(
     app: App,
     path: 'inspect' | 'approve' | 'deny',
     userId: string | null,
-    body: { challengeId: string; approveSecret: string },
+    body: { challengeId?: string | null; approveSecret: string },
     token = 'approver-token',
 ) {
     return app.inject({
@@ -426,6 +434,31 @@ describe('QR flow: status → approve → token once → consumed', () => {
             errorCode: 'LOGIN_CHALLENGE_NOT_PENDING',
             data: { status: 'consumed' },
         }));
+    });
+
+    it('manual code alone (no challengeId) resolves the pending challenge', async () => {
+        const app = await buildApp();
+        const data = await createQr(app);
+
+        const inspect = await approverCall(app, 'inspect', 'alice', {
+            approveSecret: data.manualCode.toLowerCase(),
+        });
+        expect(inspect.statusCode).toBe(200);
+        expect(inspect.json().data.challengeId).toBe(data.challengeId);
+
+        const approve = await approverCall(app, 'approve', 'alice', {
+            challengeId: '',
+            approveSecret: data.manualCode,
+        });
+        expect(approve.statusCode).toBe(200);
+
+        // Once approved the code no longer resolves without its challengeId.
+        const again = await approverCall(app, 'inspect', 'alice', { approveSecret: data.manualCode });
+        expect(again.statusCode).toBe(404);
+
+        const status = await pollStatus(app, data.challengeId, data.pollSecret);
+        expect(status.json().data.status).toBe('approved');
+        expect(typeof status.json().data.token).toBe('string');
     });
 
     it('approve/inspect/deny require authentication', async () => {
