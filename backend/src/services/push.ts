@@ -43,7 +43,8 @@ export type PushKind =
     | 'social_group_post'
     | 'social_announcement'
     | 'event_1day'
-    | 'event_1hour';
+    | 'event_1hour'
+    | 'login_approve';
 
 export interface PushPayload {
     title: string;

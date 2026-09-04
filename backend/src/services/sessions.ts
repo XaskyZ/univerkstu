@@ -226,6 +226,23 @@ export async function createUserSession(params: {
 }
 
 /**
+ * sessionId активной сессии по токену. null — если строки нет, сессия отозвана
+ * или БД недоступна: вызывающие используют это только как справочную ссылку
+ * (например, «какой сессией подтверждён вход»), а не как проверку доступа.
+ */
+export async function findSessionIdByToken(token: string): Promise<string | null> {
+    const tokenHash = hashToken(token);
+    const result = await withSupabasePostgres(async (client) => {
+        const res = await client.query<{ session_id: string }>(
+            `select session_id from app_user_sessions where token_hash = $1 and revoked_at is null limit 1`,
+            [tokenHash]
+        );
+        return res.rows[0]?.session_id ?? null;
+    });
+    return result ?? null;
+}
+
+/**
  * Получить активные сессии с маркером текущей
  */
 export async function getUserSessionsWithCurrent(userId: string, currentToken?: string | null): Promise<UserSession[]> {

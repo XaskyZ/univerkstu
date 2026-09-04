@@ -1732,6 +1732,35 @@ async function createSchema(client: PoolClient): Promise<void> {
         on app_user_sessions (token_hash);
     `);
 
+    // Challenge-вход («подтверди на другом устройстве»: QR / push). Секреты
+    // хранятся только как sha256; JWT requester'а — зашифрованным и выдаётся
+    // один раз. Строки старше суток чистятся при создании нового challenge.
+    await client.query(`
+        create table if not exists app_login_challenges (
+            challenge_id text primary key,
+            kind text not null,
+            status text not null,
+            approve_secret_hash text not null,
+            poll_secret_hash text not null,
+            target_user_id text null,
+            requester_user_agent text null,
+            requester_ip text null,
+            requester_device_name text null,
+            approved_by_user_id text null,
+            approved_by_session_id text null,
+            token_encrypted text null,
+            created_at timestamptz not null default now(),
+            expires_at timestamptz not null,
+            approved_at timestamptz null,
+            consumed_at timestamptz null
+        );
+    `);
+
+    await client.query(`
+        create index if not exists idx_app_login_challenges_status_expires
+        on app_login_challenges (status, expires_at);
+    `);
+
     await client.query(`
         create table if not exists app_support_requests (
             id text primary key,

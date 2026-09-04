@@ -33,6 +33,9 @@ async function requireActionLogPostgres<T>(
 
 export type ActionType =
     | 'login'
+    | 'register'
+    | 'login_challenge_approved'
+    | 'login_challenge_denied'
     | 'curator_login'
     | 'login_failed'
     | 'curator_login_failed'
