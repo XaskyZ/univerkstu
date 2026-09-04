@@ -11,7 +11,6 @@ import {
     FileText,
     Gift,
     Info,
-    KeyRound,
     Languages,
     LogOut,
     Megaphone,
@@ -234,12 +233,6 @@ export default function SettingsPage() {
                         title={ui.devices.rowTitle}
                         subtitle={ui.devices.rowSubtitle}
                         href="/settings/devices"
-                    />
-                    <SettingsRow
-                        icon={<KeyRound className="w-4 h-4" strokeWidth={2} />}
-                        title={ui.password.rowTitle}
-                        subtitle={ui.password.rowSubtitle}
-                        href="/settings/password"
                     />
                     <SettingsRow
                         icon={<Trophy className="w-4 h-4" strokeWidth={2} />}

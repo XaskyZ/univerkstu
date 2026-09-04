@@ -10,7 +10,7 @@ import { useLanguage } from '@/lib/language-context';
 import { toast } from '@/lib/toast';
 import { clearPendingReferralCode, getPendingReferralCode, normalizeReferralCode, setPendingReferralCode } from '@/lib/referrals';
 
-function normalizeUniverLogin(value: string): string {
+function normalizePlatonusLogin(value: string): string {
     return value.trim();
 }
 
@@ -50,7 +50,7 @@ export default function LoginForm() {
             path: '/login',
         });
 
-        const normalizedUsername = normalizeUniverLogin(username);
+        const normalizedUsername = normalizePlatonusLogin(username);
         if (normalizedUsername !== username) {
             setUsername(normalizedUsername);
         }
@@ -139,7 +139,7 @@ export default function LoginForm() {
                                 type="text"
                                 value={username}
                                 onChange={(e) => setUsername(e.target.value)}
-                                onBlur={() => setUsername((current) => normalizeUniverLogin(current))}
+                                onBlur={() => setUsername((current) => normalizePlatonusLogin(current))}
                                 placeholder="ivanov.ivan"
                                 className="input"
                                 required
@@ -209,7 +209,7 @@ export default function LoginForm() {
 
                     {/* Footer */}
                     <p className="mt-6 text-center text-xs text-muted-fg">
-                        {messages.login.credentialsHint} <span style={{ color: 'var(--accent)' }}>univer.kstu.kz</span>
+                        {messages.login.credentialsHint} <span style={{ color: 'var(--accent)' }}>Platonus (platonus.kstu.kz)</span>
                     </p>
                     <div className="mt-3 flex items-center justify-center gap-3 text-[11px] text-muted-fg">
                         <a href="/privacy" className="hover:underline">{messages.login.privacyPolicy}</a>

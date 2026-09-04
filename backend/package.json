@@ -16,7 +16,6 @@
         "test": "vitest run",
         "lint": "eslint src",
         "test:parser": "tsx src/test-parser.ts",
-        "audit:univer-coverage": "tsx src/scripts/audit-univer-coverage.ts",
         "backfill:action-logs": "tsx src/scripts/backfill-action-logs.ts",
         "backfill:exams": "tsx src/scripts/backfill-exams-from-platonus.ts",
         "backfill:platonus-grades": "tsx src/scripts/refresh-platonus-grades-for-all.ts",

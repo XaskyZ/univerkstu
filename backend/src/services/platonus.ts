@@ -116,6 +116,35 @@ export async function savePlatonusSession(
 }
 
 /**
+ * Найти userId приложения по логину Platonus.
+ *
+ * Аккаунты времён Univer имеют userId = старый Univer-логин, а в
+ * app_platonus_sessions лежит их platonus_login. При входе через Platonus
+ * ищем такую строку (без учёта регистра), чтобы не создать дубликат аккаунта.
+ * Если строк несколько — берём самую свежую (created_at обновляется при
+ * каждом сохранении сессии).
+ */
+export async function findUserIdByPlatonusLogin(platonusLoginStr: string): Promise<string | null> {
+    const normalized = platonusLoginStr.trim().toLowerCase();
+    if (!normalized) {
+        return null;
+    }
+    return requirePlatonusPostgres('findUserIdByPlatonusLogin', async (client) => {
+        const result = await client.query<{ user_id: string }>(
+            `
+                select user_id
+                from app_platonus_sessions
+                where lower(platonus_login) = $1
+                order by created_at desc
+                limit 1
+            `,
+            [normalized]
+        );
+        return result.rows[0]?.user_id ?? null;
+    });
+}
+
+/**
  * Получить активную сессию Platonus
  * Если сессия просрочена — пытается перелогиниться автоматически
  */

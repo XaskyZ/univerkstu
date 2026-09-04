@@ -1,18 +1,21 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Fastify from 'fastify';
-import { normalizeUniverLogin, authRoutes } from './auth.js';
-import * as httpClient from '../parsers/http-client.js';
+import fastifyCookie from '@fastify/cookie';
+import { normalizePlatonusLogin, authRoutes } from './auth.js';
+import * as platonusClient from '../parsers/platonus-client.js';
+import * as platonusService from '../services/platonus.js';
 import * as usersService from '../services/users.js';
+import * as referralsService from '../services/referrals.js';
 import * as sessionsService from '../services/sessions.js';
 
-vi.mock('../parsers/http-client.js', async (orig) => {
-    const actual = await orig() as typeof httpClient;
-    return {
-        ...actual,
-        login: vi.fn(),
-        changeUniverPassword: vi.fn(),
-    };
-});
+vi.mock('../parsers/platonus-client.js', () => ({
+    platonusLogin: vi.fn(),
+}));
+
+vi.mock('../services/platonus.js', () => ({
+    savePlatonusSession: vi.fn().mockResolvedValue(undefined),
+    findUserIdByPlatonusLogin: vi.fn().mockResolvedValue(null),
+}));
 
 vi.mock('../services/users.js', () => ({
     upsertUser: vi.fn(),
@@ -22,8 +25,8 @@ vi.mock('../services/users.js', () => ({
 }));
 
 vi.mock('../services/referrals.js', () => ({
-    ensureReferralProfileForUser: vi.fn(),
-    tryApplyReferralOnLogin: vi.fn(),
+    ensureReferralProfileForUser: vi.fn().mockResolvedValue(undefined),
+    tryApplyReferralOnLogin: vi.fn().mockResolvedValue({ status: 'missing' }),
 }));
 
 vi.mock('../services/sessions.js', () => ({
@@ -36,218 +39,214 @@ vi.mock('../services/group-space.js', () => ({
     getEffectiveAccess: vi.fn(),
 }));
 
-vi.mock('../parsers/schedule.js', () => ({
-    parseScheduleWithCookies: vi.fn().mockResolvedValue({ success: false, data: null }),
-}));
-
-vi.mock('../services/schedule.js', () => ({
-    saveSchedule: vi.fn(),
-}));
-
 vi.mock('../utils/actionLog.js', () => ({
     logAction: vi.fn(),
 }));
 
-describe('normalizeUniverLogin', () => {
-    // Pre-trim applied to the username before passing to KSTU's login endpoint.
-    // Critical: KSTU's auth fails silently when the login has leading/trailing
-    // whitespace — students who paste their student ID with a space would see
-    // "wrong credentials" with no hint of what's wrong without this trim.
+const PLATONUS_SESSION: platonusClient.PlatonusSession = {
+    token: 'tok_abc',
+    sid: 'sid_xyz',
+    personID: 'p987',
+    cookieString: 'plt_sid=sid_xyz',
+};
+
+describe('normalizePlatonusLogin', () => {
+    // Pre-trim applied to the username before passing to Platonus /rest/api/login.
+    // Students who paste their login with a trailing space would otherwise see
+    // "wrong credentials" with no hint of what's wrong.
 
     it('trims leading and trailing whitespace', () => {
-        expect(normalizeUniverLogin('  student@kstu.kz  ')).toBe('student@kstu.kz');
+        expect(normalizePlatonusLogin('  student  ')).toBe('student');
     });
 
     it('trims tabs and newlines (common paste artifacts)', () => {
-        expect(normalizeUniverLogin('\tstudent@kstu.kz\n')).toBe('student@kstu.kz');
+        expect(normalizePlatonusLogin('\tstudent\n')).toBe('student');
     });
 
     it('returns empty string for whitespace-only input (caller handles empty)', () => {
-        expect(normalizeUniverLogin('   ')).toBe('');
+        expect(normalizePlatonusLogin('   ')).toBe('');
     });
 
     it('preserves internal characters verbatim (no case conversion, no @-stripping)', () => {
-        // Documents that the function does NOT touch case or special chars —
-        // KSTU usernames can include @, dots, mixed case. Only outer trim.
-        expect(normalizeUniverLogin('Student.Name@kstu.kz')).toBe('Student.Name@kstu.kz');
+        expect(normalizePlatonusLogin('Student.Name@kstu.kz')).toBe('Student.Name@kstu.kz');
     });
 
     it('handles empty string', () => {
-        expect(normalizeUniverLogin('')).toBe('');
+        expect(normalizePlatonusLogin('')).toBe('');
     });
 
     it('idempotent: applying twice yields same result', () => {
-        expect(normalizeUniverLogin(normalizeUniverLogin('  abc  '))).toBe('abc');
+        expect(normalizePlatonusLogin(normalizePlatonusLogin('  abc  '))).toBe('abc');
     });
 });
 
-describe('POST /change-password', () => {
-    // Контракт route: пароль в локальной БД ОБНОВЛЯЕТСЯ только после успешной
-    // повторной проверки login(newPassword). Если KSTU «не подтвердил» смену —
-    // upsertUser НЕ должен вызываться, иначе клиент окажется заблокирован.
+describe('POST /login (Platonus)', () => {
+    // Контракт route: единственный источник идентичности — Platonus. Univer больше
+    // не вызывается. userId для старых аккаунтов берётся из app_platonus_sessions
+    // по platonus_login (без учёта регистра); для новых — сам логин Platonus.
 
-    async function buildApp(userId: string) {
+    async function buildApp() {
         const app = Fastify();
-        // Минимальный фейк аутентификации: подкладываем userId в request.user.
-        app.decorate('authenticate', async (req: any) => {
-            req.user = { userId };
-        });
+        await app.register(fastifyCookie);
+        // Минимальный фейк JWT: route зовёт app.jwt.sign({ userId }).
+        app.decorate('jwt', {
+            sign: vi.fn((payload: { userId: string }) => `jwt-for-${payload.userId}`),
+        } as any);
+        app.decorate('authenticate', async () => { });
         await app.register(authRoutes);
         return app;
     }
 
     beforeEach(() => {
         vi.clearAllMocks();
+        vi.mocked(platonusService.findUserIdByPlatonusLogin).mockResolvedValue(null);
+        vi.mocked(platonusService.savePlatonusSession).mockResolvedValue(undefined);
+        vi.mocked(referralsService.ensureReferralProfileForUser).mockResolvedValue(undefined);
+        vi.mocked(referralsService.tryApplyReferralOnLogin).mockResolvedValue({ status: 'missing' });
+        vi.mocked(usersService.upsertUser).mockResolvedValue({} as any);
     });
 
-    it('400 when newPassword too short', async () => {
-        const app = await buildApp('alice');
+    it('400 when body is missing fields', async () => {
+        const app = await buildApp();
         const response = await app.inject({
             method: 'POST',
-            url: '/change-password',
-            payload: { currentPassword: 'long-enough-old', newPassword: 'abc' },
+            url: '/login',
+            payload: { username: 'someone' },
         });
         expect(response.statusCode).toBe(400);
+        expect(platonusClient.platonusLogin).not.toHaveBeenCalled();
+    });
+
+    it('401 when Platonus rejects the credentials; nothing is persisted', async () => {
+        vi.mocked(platonusClient.platonusLogin).mockResolvedValueOnce(null);
+
+        const app = await buildApp();
+        const response = await app.inject({
+            method: 'POST',
+            url: '/login',
+            payload: { username: 'new_student', password: 'wrong' },
+        });
+
+        expect(response.statusCode).toBe(401);
         const body = response.json();
         expect(body.success).toBe(false);
-        expect(body.errorCode).toBe('AUTH_CHANGE_PASSWORD_VALIDATION');
+        expect(body.errorCode).toBe('AUTH_INVALID_CREDENTIALS');
+        expect(platonusClient.platonusLogin).toHaveBeenCalledWith('new_student', 'wrong');
         expect(usersService.upsertUser).not.toHaveBeenCalled();
-    });
-
-    it('400 when newPassword equals currentPassword', async () => {
-        const app = await buildApp('alice');
-        const same = 'same-password-x';
-        const response = await app.inject({
-            method: 'POST',
-            url: '/change-password',
-            payload: { currentPassword: same, newPassword: same },
-        });
-        expect(response.statusCode).toBe(400);
-        expect(response.json().errorCode).toBe('AUTH_CHANGE_PASSWORD_SAME');
-        expect(usersService.upsertUser).not.toHaveBeenCalled();
-    });
-
-    it('401 when current password does not log into KSTU', async () => {
-        vi.mocked(httpClient.login).mockResolvedValueOnce(null);
-
-        const app = await buildApp('bob-unique-1');
-        const response = await app.inject({
-            method: 'POST',
-            url: '/change-password',
-            payload: { currentPassword: 'wrong-current', newPassword: 'brand-new-pass' },
-        });
-        expect(response.statusCode).toBe(401);
-        expect(response.json().errorCode).toBe('AUTH_INVALID_CURRENT_PASSWORD');
-        expect(httpClient.changeUniverPassword).not.toHaveBeenCalled();
-        expect(usersService.upsertUser).not.toHaveBeenCalled();
-    });
-
-    it('502 + does NOT call upsertUser when KSTU rejects change', async () => {
-        vi.mocked(httpClient.login).mockResolvedValueOnce({
-            '.ASPXAUTH': 'X', 'ASP.NET_SessionId': 'S',
-        } as any);
-        vi.mocked(httpClient.changeUniverPassword).mockResolvedValueOnce({ success: false, error: 'pass_post_failed' });
-
-        const app = await buildApp('bob-unique-2');
-        const response = await app.inject({
-            method: 'POST',
-            url: '/change-password',
-            payload: { currentPassword: 'cur-pass-ok', newPassword: 'brand-new-pass' },
-        });
-        expect(response.statusCode).toBe(502);
-        expect(response.json().errorCode).toBe('AUTH_CHANGE_PASSWORD_UPSTREAM');
-        expect(usersService.upsertUser).not.toHaveBeenCalled();
-    });
-
-    it('502 + does NOT call upsertUser when new password fails to log in afterwards', async () => {
-        // Сценарий: KSTU отдал 200 на POST, но новый пароль не залогинился.
-        // Это значит что либо изменение не применилось, либо требования к паролю не соблюдены.
-        vi.mocked(httpClient.login)
-            .mockResolvedValueOnce({ '.ASPXAUTH': 'X', 'ASP.NET_SessionId': 'S' } as any) // verify current
-            .mockResolvedValueOnce(null); // verify new — FAILS
-        vi.mocked(httpClient.changeUniverPassword).mockResolvedValueOnce({ success: true, status: 200 });
-
-        const app = await buildApp('bob-unique-3');
-        const response = await app.inject({
-            method: 'POST',
-            url: '/change-password',
-            payload: { currentPassword: 'cur-pass-ok', newPassword: 'brand-new-pass' },
-        });
-        expect(response.statusCode).toBe(502);
-        expect(response.json().errorCode).toBe('AUTH_CHANGE_PASSWORD_NOT_APPLIED');
-        // Критичная проверка: локальный пароль НЕ обновлён.
-        expect(usersService.upsertUser).not.toHaveBeenCalled();
-    });
-
-    it('200 + upsertUser is called once when full flow succeeds', async () => {
-        vi.mocked(httpClient.login)
-            .mockResolvedValueOnce({ '.ASPXAUTH': 'X', 'ASP.NET_SessionId': 'S' } as any) // verify current
-            .mockResolvedValueOnce({ '.ASPXAUTH': 'Y', 'ASP.NET_SessionId': 'S' } as any); // verify new
-        vi.mocked(httpClient.changeUniverPassword).mockResolvedValueOnce({ success: true, status: 200 });
-        vi.mocked(usersService.upsertUser).mockResolvedValueOnce({
-            userId: 'bob-unique-4',
-            passwordEncrypted: 'enc',
-            createdAt: new Date(),
-            lastLogin: new Date(),
-        } as any);
-
-        const app = await buildApp('bob-unique-4');
-        const response = await app.inject({
-            method: 'POST',
-            url: '/change-password',
-            payload: { currentPassword: 'cur-pass-ok', newPassword: 'brand-new-pass' },
-        });
-        expect(response.statusCode).toBe(200);
-        expect(response.json()).toEqual({ success: true });
-        expect(usersService.upsertUser).toHaveBeenCalledTimes(1);
-        // Убеждаемся что новый, а не старый, пароль попал в БД.
-        expect(usersService.upsertUser).toHaveBeenCalledWith('bob-unique-4', 'brand-new-pass');
-    });
-
-    it('429 after exceeding per-user rate-limit (5 attempts / 5 min)', async () => {
-        vi.mocked(httpClient.login).mockResolvedValue(null);
-        const app = await buildApp('rate-limited-user-xyz');
-
-        // 5 разрешённых попыток.
-        for (let i = 0; i < 5; i++) {
-            const r = await app.inject({
-                method: 'POST',
-                url: '/change-password',
-                payload: { currentPassword: 'cur', newPassword: 'newpass1' },
-            });
-            expect(r.statusCode).toBe(401);
-        }
-
-        // 6-я — отказ по лимиту.
-        const blocked = await app.inject({
-            method: 'POST',
-            url: '/change-password',
-            payload: { currentPassword: 'cur', newPassword: 'newpass1' },
-        });
-        expect(blocked.statusCode).toBe(429);
-        expect(blocked.json().errorCode).toBe('AUTH_CHANGE_PASSWORD_RATE_LIMITED');
-    });
-
-    // Sanity-guard: фактически невидимый для теста, но фиксируем что мок sessions
-    // не зацепился (route не должен открывать новую сессию при смене пароля).
-    it('does not create a new device session during change-password flow', async () => {
-        vi.mocked(httpClient.login)
-            .mockResolvedValueOnce({ '.ASPXAUTH': 'X', 'ASP.NET_SessionId': 'S' } as any)
-            .mockResolvedValueOnce({ '.ASPXAUTH': 'Y', 'ASP.NET_SessionId': 'S' } as any);
-        vi.mocked(httpClient.changeUniverPassword).mockResolvedValueOnce({ success: true, status: 200 });
-        vi.mocked(usersService.upsertUser).mockResolvedValueOnce({
-            userId: 'bob-unique-5',
-            passwordEncrypted: 'enc',
-            createdAt: new Date(),
-            lastLogin: new Date(),
-        } as any);
-
-        const app = await buildApp('bob-unique-5');
-        await app.inject({
-            method: 'POST',
-            url: '/change-password',
-            payload: { currentPassword: 'cur-pass-ok', newPassword: 'brand-new-pass' },
-        });
+        expect(platonusService.savePlatonusSession).not.toHaveBeenCalled();
         expect(sessionsService.createUserSession).not.toHaveBeenCalled();
+    });
+
+    it('200 for a new user: userId = Platonus login, session cached, JWT issued', async () => {
+        vi.mocked(platonusClient.platonusLogin).mockResolvedValueOnce(PLATONUS_SESSION);
+        vi.mocked(platonusService.findUserIdByPlatonusLogin).mockResolvedValueOnce(null);
+
+        const app = await buildApp();
+        const response = await app.inject({
+            method: 'POST',
+            url: '/login',
+            payload: { username: '  new_student  ', password: 'secret-pass' },
+        });
+
+        expect(response.statusCode).toBe(200);
+        const body = response.json();
+        expect(body.success).toBe(true);
+        expect(body.token).toBe('jwt-for-new_student');
+        expect(body.user).toEqual({ userId: 'new_student' });
+        expect(body.referral).toEqual({ status: 'missing' });
+
+        // Логин нормализован (trim) до обращения к Platonus.
+        expect(platonusClient.platonusLogin).toHaveBeenCalledWith('new_student', 'secret-pass');
+        expect(platonusService.findUserIdByPlatonusLogin).toHaveBeenCalledWith('new_student');
+        expect(usersService.upsertUser).toHaveBeenCalledWith('new_student', 'secret-pass');
+        expect(platonusService.savePlatonusSession).toHaveBeenCalledWith(
+            'new_student',
+            'new_student',
+            'secret-pass',
+            PLATONUS_SESSION,
+        );
+        expect(referralsService.ensureReferralProfileForUser).toHaveBeenCalledWith('new_student');
+        expect(sessionsService.createUserSession).toHaveBeenCalledWith(expect.objectContaining({
+            userId: 'new_student',
+            token: 'jwt-for-new_student',
+        }));
+        // Cookie с JWT выставлена.
+        const setCookie = response.headers['set-cookie'];
+        expect(String(setCookie)).toContain('jwt-for-new_student');
+    });
+
+    it('200 for an existing Univer-era account: userId mapped via app_platonus_sessions', async () => {
+        vi.mocked(platonusClient.platonusLogin).mockResolvedValueOnce(PLATONUS_SESSION);
+        // Старый аккаунт: userId = Univer-логин, platonus_login = "Student01".
+        vi.mocked(platonusService.findUserIdByPlatonusLogin).mockResolvedValueOnce('Ivanov_Ivan');
+
+        const app = await buildApp();
+        const response = await app.inject({
+            method: 'POST',
+            url: '/login',
+            payload: { username: 'student01', password: 'secret-pass', referralCode: 'ABC' },
+        });
+
+        expect(response.statusCode).toBe(200);
+        const body = response.json();
+        expect(body.success).toBe(true);
+        expect(body.token).toBe('jwt-for-Ivanov_Ivan');
+        expect(body.user).toEqual({ userId: 'Ivanov_Ivan' });
+
+        expect(platonusClient.platonusLogin).toHaveBeenCalledWith('student01', 'secret-pass');
+        // Все записи привязаны к СТАРОМУ userId, чтобы не потерять историю пользователя.
+        expect(usersService.upsertUser).toHaveBeenCalledWith('Ivanov_Ivan', 'secret-pass');
+        expect(platonusService.savePlatonusSession).toHaveBeenCalledWith(
+            'Ivanov_Ivan',
+            'student01',
+            'secret-pass',
+            PLATONUS_SESSION,
+        );
+        expect(referralsService.ensureReferralProfileForUser).toHaveBeenCalledWith('Ivanov_Ivan');
+        expect(referralsService.tryApplyReferralOnLogin).toHaveBeenCalledWith('Ivanov_Ivan', 'ABC');
+        expect(sessionsService.createUserSession).toHaveBeenCalledWith(expect.objectContaining({
+            userId: 'Ivanov_Ivan',
+        }));
+    });
+
+    it('500 when the account lookup throws (no silent duplicate account)', async () => {
+        vi.mocked(platonusClient.platonusLogin).mockResolvedValueOnce(PLATONUS_SESSION);
+        vi.mocked(platonusService.findUserIdByPlatonusLogin).mockRejectedValueOnce(new Error('db down'));
+
+        const app = await buildApp();
+        const response = await app.inject({
+            method: 'POST',
+            url: '/login',
+            payload: { username: 'student01', password: 'secret-pass' },
+        });
+
+        expect(response.statusCode).toBe(500);
+        expect(usersService.upsertUser).not.toHaveBeenCalled();
+        expect(sessionsService.createUserSession).not.toHaveBeenCalled();
+    });
+
+    it('login still succeeds when caching the Platonus session fails', async () => {
+        vi.mocked(platonusClient.platonusLogin).mockResolvedValueOnce(PLATONUS_SESSION);
+        vi.mocked(platonusService.savePlatonusSession).mockRejectedValueOnce(new Error('db flake'));
+
+        const app = await buildApp();
+        const response = await app.inject({
+            method: 'POST',
+            url: '/login',
+            payload: { username: 'student02', password: 'secret-pass' },
+        });
+
+        expect(response.statusCode).toBe(200);
+        expect(response.json().user).toEqual({ userId: 'student02' });
+    });
+
+    it('change-password route no longer exists', async () => {
+        const app = await buildApp();
+        const response = await app.inject({
+            method: 'POST',
+            url: '/change-password',
+            payload: { currentPassword: 'a-long-old-one', newPassword: 'a-long-new-one' },
+        });
+        expect(response.statusCode).toBe(404);
     });
 });

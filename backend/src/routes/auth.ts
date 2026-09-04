@@ -3,12 +3,11 @@
  */
 
 import type { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { parseScheduleWithCookies } from '../parsers/schedule.js';
-import { login as loginToUniver, changeUniverPassword } from '../parsers/http-client.js';
+import { platonusLogin } from '../parsers/platonus-client.js';
+import { findUserIdByPlatonusLogin, savePlatonusSession } from '../services/platonus.js';
 import { getEffectiveAccess } from '../services/group-space.js';
 import { upsertUser, getUser, touchUserLastLogin, verifyStaffPassword } from '../services/users.js';
 import { ensureReferralProfileForUser, tryApplyReferralOnLogin } from '../services/referrals.js';
-import { saveSchedule } from '../services/schedule.js';
 import { logAction } from '../utils/actionLog.js';
 import { consumeRateLimit } from '../utils/rateLimit.js';
 import { clearUserSessionCookie, readBearerToken, readUserSessionToken, setUserSessionCookie } from '../utils/userSession.js';
@@ -25,12 +24,7 @@ interface CuratorLoginBody {
     password: string;
 }
 
-interface ChangePasswordBody {
-    currentPassword: string;
-    newPassword: string;
-}
-
-// Защита: KSTU-логин обычно `Фамилия_Имя` ≤80 символов, пароль bcrypt/text не >1024,
+// Защита: логин Platonus обычно короткий (≤80 символов), пароль bcrypt/text не >1024,
 // referralCode короткий идентификатор. Любая попытка отправить мегабайтовое
 // значение — отказ на edge.
 const MAX_LOGIN_LENGTH = 200;
@@ -56,22 +50,12 @@ const curatorLoginBodySchema = {
     },
 } as const;
 
-// Univer-side требования: минимум 9 символов, цифры + буквы, не совпадает с логином.
-// На бэкенде минимально валидируем длину (≥6) — Univer всё равно сам отвергнет слабый
-// пароль; жёсткие правила дополнительно подсказываем фронту, не блокируем route'ом,
-// чтобы не дублировать политику Univer (она может меняться).
-const MIN_NEW_PASSWORD_LENGTH = 6;
-
-const changePasswordBodySchema = {
-    type: 'object',
-    required: ['currentPassword', 'newPassword'],
-    properties: {
-        currentPassword: { type: 'string', minLength: 1, maxLength: MAX_PASSWORD_LENGTH },
-        newPassword: { type: 'string', minLength: MIN_NEW_PASSWORD_LENGTH, maxLength: MAX_PASSWORD_LENGTH },
-    },
-} as const;
-
-export function normalizeUniverLogin(value: string): string {
+/**
+ * Пре-нормализация логина Platonus перед отправкой в /rest/api/login.
+ * Только внешний trim: регистр и спецсимволы не трогаем — Platonus сам решает,
+ * что считать валидным логином.
+ */
+export function normalizePlatonusLogin(value: string): string {
     return value.trim();
 }
 
@@ -114,25 +98,29 @@ export async function authRoutes(app: FastifyInstance) {
         }
 
         // Ajv обеспечил наличие и тип полей; нормализуем whitespace в username.
-        const username = normalizeUniverLogin(request.body.username);
+        const platonusLoginStr = normalizePlatonusLogin(request.body.username);
         const password = request.body.password;
         const referralCode = request.body.referralCode;
 
-        if (!username) {
+        if (!platonusLoginStr) {
             return reply.status(400).send({
                 success: false,
                 error: 'Необходимо указать логин и пароль',
             });
         }
 
-        try {
-            // Проверяем учётные данные через KSTU
-            console.log(`[Auth] Verifying credentials for ${username}`);
-            const univerCookies = await loginToUniver(username, password);
+        // userId по умолчанию = логин Platonus (новая регистрация). Для аккаунтов
+        // времён Univer он будет заменён ниже на старый userId из app_platonus_sessions.
+        let userId = platonusLoginStr;
 
-            if (!univerCookies) {
+        try {
+            // Проверяем учётные данные через Platonus — единственный источник идентичности.
+            console.log(`[Auth] Verifying Platonus credentials for ${platonusLoginStr}`);
+            const platonusSession = await platonusLogin(platonusLoginStr, password);
+
+            if (!platonusSession) {
                 logAction(
-                    username,
+                    platonusLoginStr,
                     'login_failed',
                     'Login failed: invalid_credentials'
                 );
@@ -143,50 +131,48 @@ export async function authRoutes(app: FastifyInstance) {
                 });
             }
 
+            // Существующие аккаунты: userId = старый Univer-логин, а platonus_login
+            // лежит в app_platonus_sessions. Ищем без учёта регистра, чтобы не
+            // завести дубликат аккаунта и не потерять историю пользователя.
+            const existingUserId = await findUserIdByPlatonusLogin(platonusLoginStr);
+            if (existingUserId) {
+                userId = existingUserId;
+                if (existingUserId !== platonusLoginStr) {
+                    console.log(`[Auth] Platonus login ${platonusLoginStr} mapped to existing account ${existingUserId}`);
+                }
+            }
+
             // Сохраняем пользователя
-            await upsertUser(username, password);
+            await upsertUser(userId, password);
+
+            // Сразу кэшируем сессию Platonus — её используют расписание, оценки и т.д.
             try {
-                await ensureReferralProfileForUser(username);
-            } catch (referralProfileError) {
-                console.warn(`[Auth] Failed to ensure referral profile for ${username}:`, referralProfileError);
+                await savePlatonusSession(userId, platonusLoginStr, password, platonusSession);
+            } catch (sessionError) {
+                console.warn(`[Auth] Failed to cache Platonus session for ${userId}:`, sessionError);
             }
 
             try {
-                // Переиспользуем cookies от первичной верификации — не логинимся в KSTU второй раз.
-                const parseResult = await parseScheduleWithCookies(univerCookies);
-                if (parseResult.data) {
-                    // Осень 2026: основной источник расписания — Platonus (см.
-                    // services/schedule.ts). Univer-warmup оставляем, но не даём ему
-                    // затирать кэш НЕтекущим семестром (isCurrent === false — фолбэк
-                    // на прошлый семестр): иначе повторный логин перезаписал бы свежие
-                    // Platonus-данные прошлогодним расписанием на 7 дней.
-                    if (parseResult.data.meta.semester?.isCurrent === false) {
-                        console.warn(`[Auth] Schedule warmup skipped for ${username}: univer returned a non-current semester fallback`);
-                    } else {
-                        await saveSchedule(username, parseResult.data);
-                    }
-                } else if (!parseResult.success) {
-                    console.warn(`[Auth] Schedule warmup skipped for ${username}: ${parseResult.error || 'unknown error'}`);
-                }
-            } catch (cacheError) {
-                console.warn(`[Auth] Failed to warm schedule cache for ${username}:`, cacheError);
+                await ensureReferralProfileForUser(userId);
+            } catch (referralProfileError) {
+                console.warn(`[Auth] Failed to ensure referral profile for ${userId}:`, referralProfileError);
             }
 
             // Генерируем JWT
-            const token = app.jwt.sign({ userId: username });
+            const token = app.jwt.sign({ userId });
             setUserSessionCookie(reply, token);
 
             // Сохраняем сессию
             createUserSession({
-                userId: username,
+                userId,
                 token,
                 userAgent: request.headers['user-agent'] || null,
                 ip: request.ip || null,
             }).catch((err) => console.warn('[Auth] Failed to create session:', err));
 
-            const referral = await tryApplyReferralOnLogin(username, referralCode);
+            const referral = await tryApplyReferralOnLogin(userId, referralCode);
             if (referral.status === 'applied') {
-                logAction(username, 'referral_claim', 'Referral attached automatically on login', {
+                logAction(userId, 'referral_claim', 'Referral attached automatically on login', {
                     result: 'success',
                     metadata: {
                         source: 'link',
@@ -194,14 +180,14 @@ export async function authRoutes(app: FastifyInstance) {
                 });
             }
 
-            console.log(`[Auth] Login successful for ${username}`);
-            logAction(username, 'login', 'Login successful; JWT issued');
+            console.log(`[Auth] Login successful for ${userId}`);
+            logAction(userId, 'login', 'Login successful; JWT issued');
 
             return {
                 success: true,
                 token,
                 user: {
-                    userId: username,
+                    userId,
                 },
                 referral,
             };
@@ -209,7 +195,7 @@ export async function authRoutes(app: FastifyInstance) {
         } catch (error) {
             console.error('[Auth] Login error:', error);
             logAction(
-                username || `ip:${request.ip || 'unknown'}`,
+                userId || `ip:${request.ip || 'unknown'}`,
                 'login_failed',
                 'Login failed because of internal server error'
             );
@@ -390,110 +376,6 @@ export async function authRoutes(app: FastifyInstance) {
             return reply.status(500).send({
                 success: false,
                 error: 'Ошибка сервера при авторизации',
-            });
-        }
-    });
-
-    /**
-     * POST /api/v3/auth/change-password
-     * Смена пароля Univer/KSTU.
-     *
-     * Flow:
-     *   1. Проверяем currentPassword через login() в Univer.
-     *   2. Зовём changeUniverPassword().
-     *   3. Подтверждаем смену повторным login() с newPassword — это единственная
-     *      надёжная проверка. Если не залогинились, локальная база не обновляется.
-     *   4. При success обновляем зашифрованный пароль через upsertUser().
-     */
-    app.post('/change-password', {
-        preHandler: [app.authenticate as any],
-        schema: { body: changePasswordBodySchema },
-        attachValidation: true,
-    }, async (
-        request: FastifyRequest<{ Body: ChangePasswordBody }>,
-        reply: FastifyReply
-    ) => {
-        const userId = (request.user as any).userId as string;
-
-        if (request.validationError) {
-            return reply.status(400).send({
-                success: false,
-                error: 'Проверьте поля: текущий пароль и новый пароль (от 6 символов) обязательны',
-                errorCode: 'AUTH_CHANGE_PASSWORD_VALIDATION',
-            });
-        }
-
-        const { currentPassword, newPassword } = request.body;
-
-        if (currentPassword === newPassword) {
-            return reply.status(400).send({
-                success: false,
-                error: 'Новый пароль должен отличаться от текущего',
-                errorCode: 'AUTH_CHANGE_PASSWORD_SAME',
-            });
-        }
-
-        // Rate-limit: ограничиваем по userId, чтобы один пользователь не мог DOS-ить
-        // KSTU своими попытками сменить пароль (KSTU login достаточно медленный).
-        const rate = consumeRateLimit(`auth-change-password:${userId}`, 5, 5 * 60 * 1000);
-        if (!rate.allowed) {
-            logAction(userId, 'login_rate_limited', 'change-password blocked by rate limit');
-            reply.header('Retry-After', String(rate.retryAfterSec));
-            return reply.status(429).send({
-                success: false,
-                error: 'Слишком много попыток смены пароля. Попробуйте позже.',
-                errorCode: 'AUTH_CHANGE_PASSWORD_RATE_LIMITED',
-            });
-        }
-
-        try {
-            // 1. Verify current password actually logs into KSTU.
-            const verifyCurrent = await loginToUniver(userId, currentPassword);
-            if (!verifyCurrent) {
-                logAction(userId, 'login_failed', 'change-password: invalid current password');
-                return reply.status(401).send({
-                    success: false,
-                    error: 'Текущий пароль неверен',
-                    errorCode: 'AUTH_INVALID_CURRENT_PASSWORD',
-                });
-            }
-
-            // 2. Submit change to KSTU.
-            const changeResult = await changeUniverPassword(userId, currentPassword, newPassword);
-            if (!changeResult.success) {
-                logAction(userId, 'login_failed', `change-password: KSTU change request failed (${changeResult.error || 'unknown'})`);
-                return reply.status(502).send({
-                    success: false,
-                    error: 'Не удалось сменить пароль на стороне Univer. Попробуйте позже.',
-                    errorCode: 'AUTH_CHANGE_PASSWORD_UPSTREAM',
-                });
-            }
-
-            // 3. Verify by logging in with the NEW password. This is the only reliable
-            //    proof that KSTU actually accepted the change.
-            const verifyNew = await loginToUniver(userId, newPassword);
-            if (!verifyNew) {
-                logAction(userId, 'login_failed', 'change-password: new password did not log in after change');
-                // Не обновляем локальную базу — старый пароль всё ещё валиден на стороне KSTU.
-                return reply.status(502).send({
-                    success: false,
-                    error: 'Univer не подтвердил смену пароля. Проверьте требования к паролю и попробуйте снова.',
-                    errorCode: 'AUTH_CHANGE_PASSWORD_NOT_APPLIED',
-                });
-            }
-
-            // 4. Rotate encrypted password in our DB.
-            await upsertUser(userId, newPassword);
-            logAction(userId, 'login', 'change-password: success');
-
-            return { success: true };
-        } catch (error) {
-            console.error('[Auth] change-password error:', error instanceof Error ? error.message : 'unknown');
-            logAction(userId, 'login_failed', 'change-password: internal error');
-            return reply.status(500).send({
-                success: false,
-                error: 'Ошибка сервера при смене пароля',
-                errorCode: 'AUTH_CHANGE_PASSWORD_INTERNAL',
             });
         }
     });

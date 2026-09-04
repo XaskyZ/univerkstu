@@ -47,7 +47,7 @@ export default function ExamQuestionsSubjectDetailPage() {
         }
     });
 
-    // Auth guard — same pattern as /settings/password and /umkd.
+    // Auth guard — same pattern as /settings/devices and /umkd.
     useEffect(() => {
         if (!loading && !isAuth) {
             router.push('/');

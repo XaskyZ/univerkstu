@@ -14,7 +14,7 @@ interface SubScreenHeaderProps {
  * Reusable header chrome for nested settings sub-screens.
  *
  * Extracted from the in-place patterns in /settings/activity and
- * /settings/password — same iOS-style "back chip + title + subtitle" layout,
+ * /settings/devices — same iOS-style "back chip + title + subtitle" layout,
  * one shared component so every sub-screen agent doesn't reinvent it.
  */
 export function SubScreenHeader({ title, subtitle, backHref = '/settings', onBack }: SubScreenHeaderProps) {

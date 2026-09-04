@@ -20,7 +20,7 @@ export default function VhodUniverKstuContent() {
             ],
             faqTitle: 'Частые вопросы',
             faq: [
-                ['Как войти в Univer KSTU без ошибок?', 'Откройте страницу входа, используйте актуальные логин и пароль от университета, затем проверьте язык интерфейса.'],
+                ['Как войти в Univer KSTU без ошибок?', 'Откройте страницу входа, используйте логин и пароль от Platonus (platonus.kstu.kz), затем проверьте язык интерфейса.'],
                 ['Где после входа смотреть расписание?', 'После авторизации откроется персональное расписание: день, неделя, аудитории, преподаватели и изменения по числителю/знаменателю.'],
                 ['Можно ли войти с телефона?', 'Да, вход и дальнейшая работа с расписанием, оценками и УМКД доступны с мобильного браузера.'],
             ],
@@ -41,7 +41,7 @@ export default function VhodUniverKstuContent() {
             ],
             faqTitle: 'Жиі қойылатын сұрақтар',
             faq: [
-                ['Univer KSTU-ға қатесіз қалай кіруге болады?', 'Кіру бетін ашып, университеттің өзекті логині мен құпиясөзін пайдаланыңыз, содан кейін интерфейс тілін тексеріңіз.'],
+                ['Univer KSTU-ға қатесіз қалай кіруге болады?', 'Кіру бетін ашып, Platonus (platonus.kstu.kz) логині мен құпиясөзін пайдаланыңыз, содан кейін интерфейс тілін тексеріңіз.'],
                 ['Кіргеннен кейін кестені қайдан көремін?', 'Авторизациядан кейін жеке кесте ашылады: күн, апта, аудиториялар, оқытушылар және алым/бөлім өзгерістері.'],
                 ['Телефоннан кіруге бола ма?', 'Иә, кіру және кесте, бағалар, UMKD-пен жұмыс мобильді браузерде де қолжетімді.'],
             ],
@@ -62,7 +62,7 @@ export default function VhodUniverKstuContent() {
             ],
             faqTitle: 'Frequently asked questions',
             faq: [
-                ['How do I log in to Univer KSTU without errors?', 'Open the login page, use your current university username and password, then check the interface language.'],
+                ['How do I log in to Univer KSTU without errors?', 'Open the login page, use your Platonus (platonus.kstu.kz) login and password, then check the interface language.'],
                 ['Where can I see the schedule after login?', 'After authorization your personal schedule opens with day, week, rooms, teachers and numerator/denominator changes.'],
                 ['Can I log in from a phone?', 'Yes, login and further work with schedule, grades and UMKD are available from a mobile browser.'],
             ],

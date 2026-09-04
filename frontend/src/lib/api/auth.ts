@@ -30,7 +30,7 @@ export async function login(username: string, password: string, referralCode?: s
     try {
         trackAnalyticsEvent('login_submit', {
             feature: 'auth',
-            label: 'univer_login',
+            label: 'platonus_login',
             status: 'attempt',
             path: '/login',
         });
@@ -54,14 +54,14 @@ export async function login(username: string, password: string, referralCode?: s
             }
             trackAnalyticsEvent('login_success', {
                 feature: 'auth',
-                label: 'univer_login',
+                label: 'platonus_login',
                 status: 'success',
                 path: '/login',
             });
         } else {
             trackAnalyticsEvent('login_failure', {
                 feature: 'auth',
-                label: 'univer_login',
+                label: 'platonus_login',
                 status: String(response.status || 'failed'),
                 details: data.error || 'login_failed',
                 path: '/login',
@@ -75,7 +75,7 @@ export async function login(username: string, password: string, referralCode?: s
         }
         trackAnalyticsEvent('login_failure', {
             feature: 'auth',
-            label: 'univer_login',
+            label: 'platonus_login',
             status: error instanceof Error && error.name === 'AbortError' ? 'timeout' : 'network',
             details: error instanceof Error ? error.message : 'unknown',
             path: '/login',
@@ -180,67 +180,6 @@ export async function logout(): Promise<void> {
     } finally {
         clearTimeout(timeout);
         removeToken();
-    }
-}
-
-export interface ChangePasswordResponse {
-    success: boolean;
-    error?: string;
-    errorCode?: string;
-    statusCode?: number;
-}
-
-/**
- * Меняет пароль Univer/KSTU через бэкенд. Бэкенд сам логинится в KSTU,
- * подтверждает новый пароль и ротирует зашифрованную копию в БД.
- */
-export async function changePassword(
-    currentPassword: string,
-    newPassword: string,
-): Promise<ChangePasswordResponse> {
-    const text = apiText();
-    const token = getToken();
-    try {
-        const clientSessionId = getClientSessionId();
-        const response = await fetch(`${API_URL}/api/v3/auth/change-password`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-                ...(clientSessionId ? { 'X-Client-Session-Id': clientSessionId } : {}),
-            },
-            body: JSON.stringify({ currentPassword, newPassword }),
-            credentials: 'include',
-        });
-
-        let data: { success?: boolean; error?: string; errorCode?: string } | null = null;
-        try {
-            data = await response.json();
-        } catch {
-            data = null;
-        }
-
-        return {
-            success: Boolean(data?.success),
-            error: data?.error,
-            errorCode: data?.errorCode,
-            statusCode: response.status,
-        };
-    } catch (error: unknown) {
-        if (IS_DEV) {
-            console.error('[API] Change password error:', error);
-        }
-        if (error instanceof TypeError && error.message === 'Failed to fetch') {
-            return { success: false, error: text.cannotConnect, statusCode: 0 };
-        }
-        if (error instanceof Error && error.name === 'AbortError') {
-            return { success: false, error: text.timeout, statusCode: 0 };
-        }
-        return {
-            success: false,
-            error: `${text.networkError}: ${error instanceof Error ? error.message : text.unknownError}`,
-            statusCode: 0,
-        };
     }
 }
 

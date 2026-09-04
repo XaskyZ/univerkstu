@@ -25,7 +25,7 @@ export default function CuratorLoginForm() {
     const ui = {
         ru: {
             title: 'Вход для куратора',
-            subtitle: 'Отдельная локальная учётка куратора без авторизации через univer.kstu.kz.',
+            subtitle: 'Отдельная локальная учётка куратора без авторизации через Platonus.',
             loginLabel: 'Логин куратора',
             passwordLabel: 'Пароль',
             submit: 'Войти как куратор',
@@ -38,7 +38,7 @@ export default function CuratorLoginForm() {
         },
         kz: {
             title: 'Куратор кіруі',
-            subtitle: 'univer.kstu.kz арқылы емес, кураторға арналған бөлек жергілікті тіркелгі.',
+            subtitle: 'Platonus арқылы емес, кураторға арналған бөлек жергілікті тіркелгі.',
             loginLabel: 'Куратор логині',
             passwordLabel: 'Құпиясөз',
             submit: 'Куратор ретінде кіру',
@@ -51,7 +51,7 @@ export default function CuratorLoginForm() {
         },
         en: {
             title: 'Curator sign in',
-            subtitle: 'Separate local curator account without univer.kstu.kz authentication.',
+            subtitle: 'Separate local curator account without Platonus authentication.',
             loginLabel: 'Curator login',
             passwordLabel: 'Password',
             submit: 'Sign in as curator',

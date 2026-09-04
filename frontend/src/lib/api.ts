@@ -17,8 +17,8 @@ import {
 export { getUserId, isAuthenticated, setToken, removeToken } from './api/core';
 export type { AppLanguage } from './api/core';
 
-export { login, curatorLogin, logout, verifyToken, changePassword } from './api/auth';
-export type { LoginResponse, ChangePasswordResponse } from './api/auth';
+export { login, curatorLogin, logout, verifyToken } from './api/auth';
+export type { LoginResponse } from './api/auth';
 
 export {
     checkAdminSession,

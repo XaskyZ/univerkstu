@@ -9,7 +9,7 @@ function getSeoContent(language: 'ru' | 'kz' | 'en') {
   if (language === 'kz') {
     return {
       faq: [
-        ['Univer KSTU-ге қатесіз қалай кіруге болады?', 'Кіру бетін ашып, университеттегі өзекті логин мен парольді қолданыңыз, содан кейін интерфейс тілін тексеріңіз.'],
+        ['Univer KSTU-ге қатесіз қалай кіруге болады?', 'Кіру бетін ашып, Platonus (platonus.kstu.kz) логині мен құпиясөзін қолданыңыз, содан кейін интерфейс тілін тексеріңіз.'],
         ['Кіргеннен кейін кестені қайдан көруге болады?', 'Авторизациядан кейін жеке кесте ашылады: күн, апта, аудиториялар, оқытушылар және алым/бөлім өзгерістері.'],
         ['Телефоннан кіруге бола ма?', 'Иә, кіру және әрі қарай кестемен, бағалармен және УӘКД-мен жұмыс мобильді браузерде қолжетімді.'],
       ],
@@ -25,7 +25,7 @@ function getSeoContent(language: 'ru' | 'kz' | 'en') {
   if (language === 'en') {
     return {
       faq: [
-        ['How do I sign in to Univer KSTU without errors?', 'Open the login page, use your current university login and password, then check the interface language.'],
+        ['How do I sign in to Univer KSTU without errors?', 'Open the login page, use your Platonus (platonus.kstu.kz) login and password, then check the interface language.'],
         ['Where can I view the schedule after signing in?', 'After authorization, your personal schedule opens: day, week, rooms, teachers and numerator/denominator changes.'],
         ['Can I sign in from a phone?', 'Yes, sign-in and further work with schedule, grades and UMKD are available from a mobile browser.'],
       ],
@@ -40,7 +40,7 @@ function getSeoContent(language: 'ru' | 'kz' | 'en') {
   }
   return {
     faq: [
-      ['Как войти в Univer KSTU без ошибок?', 'Откройте страницу входа, используйте актуальные логин и пароль от университета, затем проверьте язык интерфейса.'],
+      ['Как войти в Univer KSTU без ошибок?', 'Откройте страницу входа, используйте логин и пароль от Platonus (platonus.kstu.kz), затем проверьте язык интерфейса.'],
       ['Где после входа смотреть расписание?', 'После авторизации откроется персональное расписание: день, неделя, аудитории, преподаватели и изменения по числителю/знаменателю.'],
       ['Можно ли войти с телефона?', 'Да, вход и дальнейшая работа с расписанием, оценками и УМКД доступны с мобильного браузера.'],
     ],

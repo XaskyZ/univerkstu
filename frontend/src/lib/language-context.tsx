@@ -124,34 +124,6 @@ export interface LanguageMessages {
             revokeConfirm: string;
             revokeAllConfirm: string;
         };
-        password: {
-            rowTitle: string;
-            rowSubtitle: string;
-            screenTitle: string;
-            screenSubtitle: string;
-            requirementsHint: string;
-            currentLabel: string;
-            newLabel: string;
-            repeatLabel: string;
-            placeholderCurrent: string;
-            placeholderNew: string;
-            placeholderRepeat: string;
-            submit: string;
-            submitting: string;
-            success: string;
-            errorRequired: string;
-            errorMismatch: string;
-            errorSame: string;
-            errorShort: string;
-            errorInvalidCurrent: string;
-            errorUpstream: string;
-            errorNotApplied: string;
-            errorRateLimited: string;
-            errorGeneric: string;
-            show: string;
-            hide: string;
-            back: string;
-        };
         leaderboard: {
             activityRowTitle: string;
             activityRowSubtitle: string;

@@ -278,7 +278,7 @@ await app.register(jwt, {
     secret: process.env.JWT_SECRET,
     sign: {
         // Юзер логинится один раз и живёт с этим.
-        // Перелогин нужен только если сменил пароль на univer.kstu.kz.
+        // Перелогин нужен только если сменил пароль в Platonus (platonus.kstu.kz).
         expiresIn: process.env.JWT_EXPIRES_IN || '365d',
     },
 });
